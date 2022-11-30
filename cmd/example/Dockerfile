@@ -21,7 +21,7 @@ WORKDIR /app/
 COPY --chown=nonroot $BINARY_PATH /app/example
 COPY --chown=nonroot LICENSE /app/LICENSE
 
-EXPOSE 80
+EXPOSE 8080
 ENTRYPOINT ["/app/example"]
 
 # Standardized Docker Image Labels
