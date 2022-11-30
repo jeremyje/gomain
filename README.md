@@ -32,3 +32,14 @@ func runServer(wait func()) error {
 }
 
 ```
+
+## Dump Stack Trace
+
+Any application that uses this library on non-Windows OSes can dump a stack trace via:
+
+```bash
+# Get the process ID.
+ps -a
+
+kill -s SIGUSR1 [PID]
+```
