@@ -26,6 +26,10 @@ func platformRun(f MainFunc, cfg Config) {
 	runInteractive(f)
 }
 
+func getTerminalSignals() []os.Signal {
+	return append(getTerminalSignalsBase(), syscall.SIGUSR1)
+}
+
 func handleSignal(sig os.Signal) bool {
 	switch sig {
 	case syscall.SIGUSR1:

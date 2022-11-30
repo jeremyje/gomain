@@ -39,10 +39,6 @@ func Run(f MainFunc, cfg Config) {
 	platformRun(f, cfg)
 }
 
-func getTerminalSignals() []os.Signal {
-	return []os.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGABRT}
-}
-
 func runInteractive(f MainFunc) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, getTerminalSignals()...)
@@ -80,6 +76,10 @@ func handleError(err error) {
 	if err != nil {
 		log.Printf("ERROR: %s", err)
 	}
+}
+
+func getTerminalSignalsBase() []os.Signal {
+	return []os.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGABRT}
 }
 
 func handleSignalBase(sig os.Signal) bool {

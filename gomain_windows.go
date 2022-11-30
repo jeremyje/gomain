@@ -262,6 +262,10 @@ func runService(f MainFunc, name string, isDebug bool) {
 	elog.Info(1, fmt.Sprintf("%s service stopped", name))
 }
 
+func getTerminalSignals() []os.Signal {
+	return getTerminalSignalsBase()
+}
+
 func handleSignal(sig os.Signal) bool {
 	return handleSignalBase(sig)
 }
