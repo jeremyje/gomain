@@ -16,6 +16,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http"
 
 	"github.com/jeremyje/gomain"
@@ -36,15 +37,17 @@ func appMain(waitFunc func()) error {
 	})
 	s := &http.Server{
 		Handler: mux,
-		Addr:    "localhost:0",
+		Addr:    ":8181",
 	}
 
 	go func() {
 		waitFunc()
 		ctx := context.Background()
+		log.Printf("Stopping server...")
 		s.Shutdown(ctx)
 	}()
 
+	log.Printf("Serving on :8181")
 	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return err
 	}

@@ -16,11 +16,11 @@ ARG WINDOWS_VERSION=1809
 
 FROM mcr.microsoft.com/windows/nanoserver:${WINDOWS_VERSION}
 
-COPY bin/go/windows_amd64/example.exe /app/example.exe
+COPY build/bin/windows_amd64/example.exe /app/example.exe
 COPY LICENSE /app/LICENSE
 
 USER ContainerUser
-EXPOSE 80
+EXPOSE 8080
 ENTRYPOINT ["/app/example.exe"]
 
 # Standardized Docker Image Labels

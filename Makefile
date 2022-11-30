@@ -15,13 +15,18 @@
 GO = GO111MODULE=on go
 DOCKER = DOCKER_CLI_EXPERIMENTAL=enabled docker
 
-VERSION = $(shell git describe --tags)
+SHORT_SHA = $(shell git rev-parse --short=7 HEAD | tr -d [:punct:])
+DIRTY_VERSION = v0.0.0-$(SHORT_SHA)
+VERSION = $(shell git describe --tags || (echo $(DIRTY_VERSION) && exit 1))
 BUILD_DATE = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 TAG := $(VERSION)
 
 export PATH := $(PWD)/build/toolchain/bin:$(PATH):/root/go/bin:/usr/local/go/bin:/usr/go/bin
 GO = go
 SOURCE_DIRS=$(shell go list ./... | grep -v '/vendor/')
+
+REGISTRY = ghcr.io/jeremyje
+GOMAIN_EXAMPLE_IMAGE = $(REGISTRY)/gomain-example
 
 PROTOS = proto/hardware.pb.go
 
@@ -37,6 +42,14 @@ ALL_APPS = example
 MAIN_BINARIES = $(foreach app,$(ALL_APPS),$(foreach platform,$(MAIN_PLATFORMS),build/bin/$(platform)/$(app)$(if $(findstring windows_,$(platform)),.exe,)))
 ALL_BINARIES = $(foreach app,$(ALL_APPS),$(foreach platform,$(ALL_PLATFORMS),build/bin/$(platform)/$(app)$(if $(findstring windows_,$(platform)),.exe,)))
 
+WINDOWS_VERSIONS = 1709 1803 1809 1903 1909 2004 20H2 ltsc2022
+BUILDX_BUILDER = buildx-builder
+ifeq ($(CI),true)
+	DOCKER_BUILDER_FLAG =
+else
+	DOCKER_BUILDER_FLAG = --builder $(BUILDX_BUILDER)
+endif
+
 binaries: $(MAIN_BINARIES)
 all: $(ALL_BINARIES)
 
@@ -49,7 +62,7 @@ lint:
 	$(GO) vet ./...
 
 test:
-	$(GO) test -race ${SOURCE_DIRS} -cover
+	$(GO) test -race ${SOURCE_DIRS} -cover -count 100
 
 coverage.txt:
 	for sfile in ${SOURCE_DIRS} ; do \
@@ -59,6 +72,40 @@ coverage.txt:
 			$(RM) package.coverage; \
 		fi; \
 	done
+
+ensure-builder:
+ifeq ($(CI),true)
+	echo "Skipping creation of buildx context, running in CI."
+else
+	-$(DOCKER) buildx create --name $(BUILDX_BUILDER)
+endif
+
+ALL_IMAGES = $(GOMAIN_EXAMPLE_IMAGE)
+# https://github.com/docker-library/official-images#architectures-other-than-amd64
+images: DOCKER_PUSH = --push
+images: linux-images windows-images
+	-$(DOCKER) manifest rm $(GOMAIN_EXAMPLE_IMAGE):$(TAG)
+
+	for image in $(ALL_IMAGES) ; do \
+		$(DOCKER) manifest create $$image:$(TAG) $(foreach winver,$(WINDOWS_VERSIONS),$${image}:$(TAG)-windows_amd64-$(winver)) $(foreach platform,$(LINUX_PLATFORMS),$${image}:$(TAG)-$(platform)) ; \
+		for winver in $(WINDOWS_VERSIONS) ; do \
+			windows_version=`$(DOCKER) manifest inspect mcr.microsoft.com/windows/nanoserver:$${winver} | jq -r '.manifests[0].platform["os.version"]'`; \
+			$(DOCKER) manifest annotate --os-version $${windows_version} $${image}:$(TAG) $${image}:$(TAG)-windows_amd64-$${winver} ; \
+		done ; \
+		$(DOCKER) manifest push $$image:$(TAG) ; \
+	done
+
+ALL_LINUX_IMAGES = $(foreach app,$(ALL_APPS),$(foreach platform,$(LINUX_PLATFORMS),linux-image-$(app)-$(platform)))
+linux-images: $(ALL_LINUX_IMAGES)
+
+linux-image-example-%: build/bin/%/example ensure-builder
+	$(DOCKER) buildx build $(DOCKER_BUILDER_FLAG) --platform $(subst _,/,$*) --build-arg BINARY_PATH=$< -f cmd/example/Dockerfile -t $(GOMAIN_EXAMPLE_IMAGE):$(TAG)-$* . $(DOCKER_PUSH)
+
+ALL_WINDOWS_IMAGES = $(foreach app,$(ALL_APPS),$(foreach winver,$(WINDOWS_VERSIONS),windows-image-$(app)-$(winver)))
+windows-images: $(ALL_WINDOWS_IMAGES)
+
+windows-image-example-%: build/bin/windows_amd64/example.exe ensure-builder
+	$(DOCKER) buildx build $(DOCKER_BUILDER_FLAG) --platform windows/amd64 -f cmd/example/Dockerfile.windows --build-arg WINDOWS_VERSION=$* -t $(GOMAIN_EXAMPLE_IMAGE):$(TAG)-windows_amd64-$* . $(DOCKER_PUSH)
 
 clean:
 	-chmod -R +w build/
