@@ -22,6 +22,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/jeremyje/gomain/internal"
@@ -263,9 +264,17 @@ func runService(f MainFunc, name string, isDebug bool) {
 }
 
 func getTerminalSignals() []os.Signal {
-	return getTerminalSignalsBase()
+	return append(getTerminalSignalsBase(), syscall.SIGTERM, syscall.SIGABRT)
 }
 
 func handleSignal(sig os.Signal) bool {
-	return handleSignalBase(sig)
+	switch sig {
+	case syscall.SIGTERM:
+		return true
+	case syscall.SIGABRT:
+		logStackDump()
+		return true
+	default:
+		return handleSignalBase(sig)
+	}
 }

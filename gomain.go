@@ -79,14 +79,14 @@ func handleError(err error) {
 }
 
 func getTerminalSignalsBase() []os.Signal {
-	return []os.Signal{syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGABRT}
+	return []os.Signal{syscall.SIGINT, syscall.SIGKILL}
 }
 
 func handleSignalBase(sig os.Signal) bool {
 	switch sig {
-	case syscall.SIGINT, syscall.SIGTERM:
+	case syscall.SIGINT:
 		return true
-	case syscall.SIGKILL, syscall.SIGABRT:
+	case syscall.SIGKILL:
 		logStackDump()
 		return true
 	default:
