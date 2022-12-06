@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:build !windows && !plan9 && !js
-// +build !windows,!plan9,!js
+//go:build plan9
+// +build plan9
 
 package gomain
 
@@ -27,7 +27,7 @@ func platformRun(f MainFunc, cfg Config) {
 }
 
 func getTerminalSignals() []os.Signal {
-	return append(getTerminalSignalsBase(), syscall.SIGTERM, syscall.SIGABRT, syscall.SIGUSR1)
+	return append(getTerminalSignalsBase(), syscall.SIGTERM, syscall.SIGABRT)
 }
 
 func handleSignal(sig os.Signal) bool {
@@ -37,9 +37,6 @@ func handleSignal(sig os.Signal) bool {
 	case syscall.SIGABRT:
 		logStackDump()
 		return true
-	case syscall.SIGUSR1:
-		logStackDump()
-		return false
 	default:
 		return handleSignalBase(sig)
 	}

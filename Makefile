@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-GO = GO111MODULE=on go
+GO = go
 DOCKER = DOCKER_CLI_EXPERIMENTAL=enabled docker
 
 SHORT_SHA = $(shell git rev-parse --short=7 HEAD | tr -d [:punct:])
@@ -22,21 +22,24 @@ BUILD_DATE = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
 TAG := $(VERSION)
 
 export PATH := $(PWD)/build/toolchain/bin:$(PATH):/root/go/bin:/usr/local/go/bin:/usr/go/bin
-GO = go
 SOURCE_DIRS=$(shell go list ./... | grep -v '/vendor/')
 
 REGISTRY = ghcr.io/jeremyje
 GOMAIN_EXAMPLE_IMAGE = $(REGISTRY)/gomain-example
 
-PROTOS = proto/hardware.pb.go
-
-ASSETS = $(PROTOS)
-NICHE_PLATFORMS =
-LINUX_PLATFORMS = linux_386 linux_amd64 linux_arm_v5 linux_arm_v6 linux_arm_v7 linux_arm64 linux_s390x linux_ppc64le linux_riscv64 linux_mips64le linux_mips linux_mipsle linux_mips64
-LINUX_NICHE_PLATFORMS = 
-WINDOWS_PLATFORMS = windows_386 windows_amd64
+LINUX_PLATFORMS = linux_386 linux_amd64 linux_arm_v5 linux_arm_v6 linux_arm_v7 linux_arm64 linux_s390x linux_ppc64 linux_ppc64le linux_riscv64 linux_mips64le linux_mips linux_mipsle linux_mips64
+WINDOWS_PLATFORMS = windows_386 windows_amd64 windows_arm windows_arm64
 MAIN_PLATFORMS = windows_amd64 linux_amd64 linux_arm64
-ALL_PLATFORMS = $(LINUX_PLATFORMS) $(LINUX_NICHE_PLATFORMS) $(WINDOWS_PLATFORMS) $(foreach niche,$(NICHE_PLATFORMS),$(niche)_amd64 $(niche)_arm64)
+ANDROID_PLATFORMS = #android_386 android_amd64 android_arm android_arm_v5 android_arm_v6 android_arm_v7 android_arm64
+IOS_PLATFORMS = ios_amd64 ios_arm64
+DARWIN_PLATFORMS = darwin_amd64 darwin_arm64
+DRAGONFLY_PLATFORMS = dragonfly_amd64
+FREEBSD_PLATFORMS = freebsd_386 freebsd_amd64 freebsd_arm freebsd_arm64
+NETBSD_PLATFORMS = netbsd_386 netbsd_amd64 netbsd_arm netbsd_arm64
+OPENBSD_PLATFORMS = openbsd_386 openbsd_amd64 openbsd_arm openbsd_arm64 openbsd_mips64
+PLAN9_PLATFORMS = plan9_386 plan9_amd64 plan9_arm
+NICHE_PLATFORMS = js_wasm solaris_amd64 illumos_amd64 aix_ppc64 $(ANDROID_PLATFORMS) $(DARWIN_PLATFORMS) $(FREEBSD_PLATFORMS) $(NETBSD_PLATFORMS) $(OPENBSD_PLATFORMS) $(PLAN9_PLATFORMS)
+ALL_PLATFORMS = $(LINUX_PLATFORMS) $(WINDOWS_PLATFORMS) $(NICHE_PLATFORMS)
 ALL_APPS = example
 
 MAIN_BINARIES = $(foreach app,$(ALL_APPS),$(foreach platform,$(MAIN_PLATFORMS),build/bin/$(platform)/$(app)$(if $(findstring windows_,$(platform)),.exe,)))
