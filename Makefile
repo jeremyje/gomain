@@ -115,4 +115,8 @@ clean:
 	-chmod -R +w build/
 	rm -rf build/
 
-.PHONY: all run lint test clean
+upgrade-deps:
+	$(GO) get -u ./...
+	$(GO) mod tidy
+
+.PHONY: all run lint test clean upgrade-deps
