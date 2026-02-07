@@ -119,6 +119,6 @@ upgrade-deps:
 	$(GO) get -u ./...
 	$(GO) mod tidy
 
-presubmit: clean lint test all images
+presubmit: clean lint test coverage all images
 
 .PHONY: binaries all lint test ensure-builder images linux-images windows-images clean upgrade-deps presubmit

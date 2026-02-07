@@ -30,7 +30,6 @@ func runServer(wait func()) error {
   }()
   return server.Run()
 }
-
 ```
 
 ## Dump Stack Trace
