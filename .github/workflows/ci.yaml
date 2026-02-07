@@ -99,7 +99,7 @@ jobs:
 
     # https://github.com/actions/upload-artifact
     - name: Publish Application
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       if: startsWith(github.ref, 'refs/tags/')
       with:
         name: release.tar.gz
