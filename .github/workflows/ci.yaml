@@ -25,20 +25,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-
-    # Checks out a copy of your repository on the ubuntu-latest machine
+    # https://github.com/actions/checkout
     - name: Checkout Code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     # https://github.com/actions/setup-go
     - name: Setup Go
-      uses: actions/setup-go@v3
+      uses: actions/setup-go@v6
       with:
-        go-version: '1.21'
-
-    #- name: Prepare
-    #  run: |
-    #    apt-get -y -qq install lib32z1 gcc-arm* gcc-multilib
+        go-version: '1.25'
 
     - name: Clean
       run: make clean
@@ -49,8 +44,9 @@ jobs:
     - name: Coverage
       run: make coverage.txt
 
+    # https://github.com/codecov/codecov-action
     - name: Push Code Coverage
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
         files: ./coverage.txt # optional
@@ -65,26 +61,29 @@ jobs:
     # https://github.com/docker/login-action#github-packages-docker-registry
     - name: Login to GitHub Container Registry
       #if: startsWith(github.ref, 'refs/tags/')
-      uses: docker/login-action@v2
+      uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    # https://github.com/docker/setup-qemu-action
     - name: Set up QEMU
       #if: startsWith(github.ref, 'refs/tags/')
-      uses: docker/setup-qemu-action@v2
+      uses: docker/setup-qemu-action@v3
 
+    # https://github.com/docker/setup-buildx-action
     - name: Set up Docker Buildx
       #if: startsWith(github.ref, 'refs/tags/')
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v3
 
     - name: Build Images
       #if: startsWith(github.ref, 'refs/tags/')
       run: make DOCKER_PUSH=--push DOCKER_BUILDER_FLAG="--provenance false" images
 
+    # https://github.com/softprops/action-gh-release
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       if: startsWith(github.ref, 'refs/tags/')
       with:
         generate_release_notes: true
@@ -95,8 +94,9 @@ jobs:
           build/bin/linux_amd64/example
           build/bin/windows_amd64/example.exe
 
+    # https://github.com/actions/upload-artifact
     - name: Publish Application
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: startsWith(github.ref, 'refs/tags/')
       with:
         name: release.tar.gz

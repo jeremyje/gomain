@@ -46,7 +46,7 @@ ALL_APPS = example
 MAIN_BINARIES = $(foreach app,$(ALL_APPS),$(foreach platform,$(MAIN_PLATFORMS),build/bin/$(platform)/$(app)$(if $(findstring windows_,$(platform)),.exe,)))
 ALL_BINARIES = $(foreach app,$(ALL_APPS),$(foreach platform,$(ALL_PLATFORMS),build/bin/$(platform)/$(app)$(if $(findstring windows_,$(platform)),.exe,)))
 
-WINDOWS_VERSIONS = 1709 1803 1809 1903 1909 2004 20H2 ltsc2022
+WINDOWS_VERSIONS = 1709 1803 1809 1903 1909 2004 20H2 ltsc2022 ltsc2025
 BUILDX_BUILDER = buildx-builder
 ifeq ($(CI),true)
 	DOCKER_BUILDER_FLAG =
@@ -119,4 +119,6 @@ upgrade-deps:
 	$(GO) get -u ./...
 	$(GO) mod tidy
 
-.PHONY: all run lint test clean upgrade-deps
+presubmit: clean lint test images
+
+.PHONY: binaries all lint test ensure-builder images linux-images windows-images clean upgrade-deps presubmit

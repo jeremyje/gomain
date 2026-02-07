@@ -1,5 +1,5 @@
 module github.com/jeremyje/gomain
 
-go 1.19
+go 1.24.0
 
-require golang.org/x/sys v0.17.0
+require golang.org/x/sys v0.40.0
