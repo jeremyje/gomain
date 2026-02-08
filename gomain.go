@@ -36,20 +36,20 @@ type Config struct {
 }
 
 func Run(f MainFunc, cfg Config) {
-	platformRun(f, cfg)
+	handleError(platformRun(f, cfg))
 }
 
-func runInteractive(f MainFunc) {
+func runInteractive(f MainFunc) error {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, getTerminalSignals()...)
 	defer func() {
 		signal.Stop(sigCh)
 		close(sigCh)
 	}()
-	runInteractiveInternal(f, sigCh)
+	return runInteractiveInternal(f, sigCh)
 }
 
-func runInteractiveInternal(f MainFunc, sigCh chan os.Signal) {
+func runInteractiveInternal(f MainFunc, sigCh chan os.Signal) error {
 	mainErrCh := make(chan error, 1)
 
 	mc := internal.NewRunCtx()
@@ -62,14 +62,14 @@ func runInteractiveInternal(f MainFunc, sigCh chan os.Signal) {
 
 	select {
 	case err := <-mainErrCh:
-		handleError(err)
-		return
+		return err
 	case sig := <-sigCh:
 		if handleSignal(sig) {
 			signal.Stop(sigCh)
 			mc.Kill()
 		}
 	}
+	return nil
 }
 
 func handleError(err error) {

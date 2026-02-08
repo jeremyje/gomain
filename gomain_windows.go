@@ -19,7 +19,6 @@ package gomain
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"syscall"
@@ -32,23 +31,22 @@ import (
 	"golang.org/x/sys/windows/svc/mgr"
 )
 
-func platformRun(f MainFunc, cfg Config) {
+func platformRun(f MainFunc, cfg Config) error {
 	svcMode, err := svc.IsWindowsService()
 	if err != nil {
-		log.Fatalf("failed to determine if we are running in service: %v", err)
+		return fmt.Errorf("cannot determine if process is running as a Windows Service, likely caused by an error in NtQuerySystemInformation or NtQueryInformationProcess, %w", err)
 	}
 	if svcMode {
-		runService(f, cfg.ServiceName, false)
+		return runService(f, cfg.ServiceName, false)
 	} else {
 		if cfg.Command != "" {
-			serviceControl(f, cfg)
-		} else {
-			runInteractive(f)
+			return serviceControl(f, cfg)
 		}
+		return runInteractive(f)
 	}
 }
 
-func serviceControl(f MainFunc, cfg Config) {
+func serviceControl(f MainFunc, cfg Config) error {
 	var err error
 	svcName := cfg.ServiceName
 	description := cfg.ServiceDescription
@@ -56,8 +54,7 @@ func serviceControl(f MainFunc, cfg Config) {
 
 	switch strings.ToLower(cmd) {
 	case "debug":
-		runService(f, svcName, true)
-		return
+		err = runService(f, svcName, true)
 	case "install":
 		err = installService(svcName, description)
 	case "remove":
@@ -71,18 +68,16 @@ func serviceControl(f MainFunc, cfg Config) {
 	case "continue":
 		err = controlService(svcName, svc.Continue, svc.Running)
 	default:
-		usage(fmt.Sprintf("invalid command %s", cmd))
+		usage(fmt.Sprintf("invalid service command %s", cmd))
 	}
-	handleError(err)
+	return err
 }
 
 func usage(errmsg string) {
 	fmt.Fprintf(os.Stderr,
-		"%s\n\n"+
-			"usage: %s <command>\n"+
-			"       where <command> is one of\n"+
-			"       install, remove, debug, start, stop, pause or continue.\n",
-		errmsg, os.Args[0])
+		"ERROR: %s\n\nservice control usage: %s [install, remove, debug, start, stop, pause, continue]\n",
+		errmsg,
+		os.Args[0])
 	os.Exit(2)
 }
 
@@ -96,7 +91,7 @@ func installService(name, desc string) error {
 	s, err := m.OpenService(name)
 	if err == nil {
 		s.Close()
-		return fmt.Errorf("service %s already exists", name)
+		return fmt.Errorf("service %q already exists", name)
 	}
 	s, err = m.CreateService(name, exepath, mgr.Config{DisplayName: desc}, "is", "auto-started")
 	if err != nil {
@@ -119,7 +114,7 @@ func removeService(name string) error {
 	defer m.Disconnect()
 	s, err := m.OpenService(name)
 	if err != nil {
-		return fmt.Errorf("service %s is not installed", name)
+		return fmt.Errorf("service %q is not installed", name)
 	}
 	defer s.Close()
 	err = s.Delete()
@@ -141,12 +136,12 @@ func startService(name string) error {
 	defer m.Disconnect()
 	s, err := m.OpenService(name)
 	if err != nil {
-		return fmt.Errorf("could not access service: %v", err)
+		return fmt.Errorf("could not access service %q: %v", name, err)
 	}
 	defer s.Close()
 	err = s.Start("is", "manual-started")
 	if err != nil {
-		return fmt.Errorf("could not start service: %v", err)
+		return fmt.Errorf("could not start service %q: %v", name, err)
 	}
 	return nil
 }
@@ -159,22 +154,22 @@ func controlService(name string, c svc.Cmd, to svc.State) error {
 	defer m.Disconnect()
 	s, err := m.OpenService(name)
 	if err != nil {
-		return fmt.Errorf("could not access service: %v", err)
+		return fmt.Errorf("could not access service %q: %v", name, err)
 	}
 	defer s.Close()
 	status, err := s.Control(c)
 	if err != nil {
-		return fmt.Errorf("could not send control=%d: %v", c, err)
+		return fmt.Errorf("could not send control=%d to service %q: %v", c, name, err)
 	}
 	timeout := time.Now().Add(10 * time.Second)
 	for status.State != to {
 		if timeout.Before(time.Now()) {
-			return fmt.Errorf("timeout waiting for service to go to state=%d", to)
+			return fmt.Errorf("timeout waiting for service %q to go to state=%d", name, to)
 		}
 		time.Sleep(300 * time.Millisecond)
 		status, err = s.Query()
 		if err != nil {
-			return fmt.Errorf("could not retrieve service status: %v", err)
+			return fmt.Errorf("could not retrieve service status for %q: %v", name, err)
 		}
 	}
 	return nil
@@ -236,14 +231,14 @@ func (ws *windowsService) handleControl(cr svc.ChangeRequest, changes chan<- svc
 	return done
 }
 
-func runService(f MainFunc, name string, isDebug bool) {
+func runService(f MainFunc, name string, isDebug bool) error {
 	var err error
 	if isDebug {
 		elog = debug.New(name)
 	} else {
 		elog, err = eventlog.Open(name)
 		if err != nil {
-			return
+			return fmt.Errorf("cannot access the Windows Event Log, %w", err)
 		}
 	}
 	defer elog.Close()
@@ -258,9 +253,10 @@ func runService(f MainFunc, name string, isDebug bool) {
 	})
 	if err != nil {
 		elog.Error(1, fmt.Sprintf("%s service failed: %v", name, err))
-		return
+		return err
 	}
 	elog.Info(1, fmt.Sprintf("%s service stopped", name))
+	return nil
 }
 
 func getTerminalSignals() []os.Signal {
