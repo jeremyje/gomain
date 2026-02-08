@@ -22,8 +22,8 @@ import (
 	"syscall"
 )
 
-func platformRun(f MainFunc, cfg Config) {
-	runInteractive(f)
+func platformRun(f MainFunc, cfg Config) error {
+	return runInteractive(f)
 }
 
 func getTerminalSignals() []os.Signal {

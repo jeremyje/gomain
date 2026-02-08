@@ -19,6 +19,7 @@ import (
 	"github.com/jeremyje/gomain/internal"
 )
 
+// Main provides a runtime test harness for Windows Services under test.
 func Main(f gomain.MainFunc) func() error {
 	errCh := make(chan error, 1)
 	runCtx := internal.NewRunCtx()
