@@ -16,6 +16,7 @@ package gomain
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"sync"
 	"testing"
@@ -30,7 +31,7 @@ var (
 		},
 		"waitForeverFailingFunc": func(wait func()) error {
 			wait()
-			return fmt.Errorf("failed")
+			return fmt.Errorf("waitForeverFailingFunc always will return this error")
 		},
 	}
 
@@ -39,25 +40,20 @@ var (
 			return nil
 		},
 		"immediateFailFunc": func(wait func()) error {
-			return fmt.Errorf("failed")
+			return fmt.Errorf("immediateFailFunc always will return this error")
 		},
 	}
 )
 
 func getAllMainFuncs() map[string]MainFunc {
 	mains := map[string]MainFunc{}
-	for k, v := range waitForeverFuncs {
-		mains[k] = v
-	}
-	for k, v := range immediateMainFuncs {
-		mains[k] = v
-	}
+	maps.Copy(mains, waitForeverFuncs)
+	maps.Copy(mains, immediateMainFuncs)
 	return mains
 }
 
 func TestHandleSignalBase(t *testing.T) {
 	for _, tc := range handleSignalTestCases {
-		tc := tc
 		t.Run(tc.input.String(), func(t *testing.T) {
 			t.Parallel()
 			got := handleSignal(tc.input)
@@ -70,10 +66,7 @@ func TestHandleSignalBase(t *testing.T) {
 
 func TestRunInteractiveInternal(t *testing.T) {
 	for mainName, mainFunc := range getAllMainFuncs() {
-		mainFunc := mainFunc
 		for _, tc := range handleSignalTestCases {
-			tc := tc
-
 			t.Run(fmt.Sprintf("%s - %s", mainName, tc.input.String()), func(t *testing.T) {
 				t.Parallel()
 				sigCh := make(chan os.Signal, 1)
@@ -83,7 +76,9 @@ func TestRunInteractiveInternal(t *testing.T) {
 					sigCh <- tc.input
 				}()
 
-				runInteractiveInternal(mainFunc, sigCh)
+				if err := runInteractiveInternal(mainFunc, sigCh); err != nil {
+					t.Errorf("error when calling runInteralInteractive(), %v", err)
+				}
 			})
 		}
 	}
@@ -91,10 +86,7 @@ func TestRunInteractiveInternal(t *testing.T) {
 
 func TestRunInteractiveInternalAllSignals(t *testing.T) {
 	for mainName, mainFunc := range getAllMainFuncs() {
-		mainFunc := mainFunc
 		for _, signal := range getAllSignals() {
-			signal := signal
-
 			t.Run(fmt.Sprintf("%s - %s", mainName, signal.String()), func(t *testing.T) {
 				t.Parallel()
 				sigCh := make(chan os.Signal, 1)
@@ -116,7 +108,9 @@ func TestRunInteractiveInternalAllSignals(t *testing.T) {
 					m.Unlock()
 				}()
 
-				runInteractiveInternal(mainFunc, sigCh)
+				if err := runInteractiveInternal(mainFunc, sigCh); err != nil {
+					t.Errorf("error when calling runInteractiveInteral() %v", err)
+				}
 			})
 		}
 	}
@@ -124,9 +118,7 @@ func TestRunInteractiveInternalAllSignals(t *testing.T) {
 
 func TestRunInteractiveAllSignals(t *testing.T) {
 	for mainName, mainFunc := range immediateMainFuncs {
-		mainFunc := mainFunc
 		for _, signal := range getAllSignals() {
-			signal := signal
 			t.Run(fmt.Sprintf("%s - %s", mainName, signal), func(t *testing.T) {
 				t.Parallel()
 				runInteractive(mainFunc)
