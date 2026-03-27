@@ -49,7 +49,7 @@ jobs:
 
     # https://github.com/codecov/codecov-action
     - name: Push Code Coverage
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v6
       with:
         token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
         files: ./coverage.txt # optional
