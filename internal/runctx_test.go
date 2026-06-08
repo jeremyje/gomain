@@ -40,6 +40,36 @@ func TestWaitAfterKill(t *testing.T) {
 	rCtx.Wait()
 }
 
+func TestKillTwiceDoesNotDeadlock(t *testing.T) {
+	rCtx := NewRunCtx()
+
+	killDone := make(chan struct{})
+	go func() {
+		rCtx.Kill()
+		rCtx.Kill() // second call: waitCh's buffer is already full
+		close(killDone)
+	}()
+
+	select {
+	case <-killDone:
+	case <-time.After(2 * time.Second):
+		t.Fatal("calling Kill() twice deadlocked: the second call blocked sending " +
+			"on the full waitCh buffer while still holding RunCtx's lock")
+	}
+
+	closeDone := make(chan struct{})
+	go func() {
+		rCtx.Close()
+		close(closeDone)
+	}()
+
+	select {
+	case <-closeDone:
+	case <-time.After(2 * time.Second):
+		t.Fatal("Close() deadlocked: it could not acquire the lock held by the blocked Kill() call")
+	}
+}
+
 func TestWait(t *testing.T) {
 	rCtx := NewRunCtx()
 	done := make(chan bool, 1)

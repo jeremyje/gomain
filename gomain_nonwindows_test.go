@@ -30,7 +30,11 @@ var (
 		{input: syscall.SIGUSR1, want: false},
 		{input: syscall.SIGINT, want: true},
 		{input: syscall.SIGTERM, want: true},
-		{input: syscall.SIGKILL, want: true},
+		// SIGKILL can never be delivered to a signal handler (POSIX
+		// prohibits catching, blocking, or ignoring it); it must not be
+		// treated as a terminal signal here.
+		{input: syscall.SIGKILL, want: false},
+		{input: syscall.SIGQUIT, want: true},
 		{input: syscall.SIGABRT, want: true},
 	}
 )
@@ -54,6 +58,7 @@ func getAllSignals() []os.Signal {
 		syscall.SIGPOLL,
 		syscall.SIGPROF,
 		syscall.SIGPWR,
+		syscall.SIGQUIT,
 		syscall.SIGSEGV,
 		syscall.SIGSTKFLT,
 		syscall.SIGSTOP,

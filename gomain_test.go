@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -55,7 +56,25 @@ func getAllMainFuncs() map[string]MainFunc {
 	return mains
 }
 
-func TestHandleSignalBase(t *testing.T) {
+func TestGetTerminalSignalsBaseDoesNotRegisterUncatchableSignals(t *testing.T) {
+	for _, sig := range getTerminalSignalsBase() {
+		if sig == syscall.SIGKILL {
+			t.Errorf("getTerminalSignalsBase() registers %s, but SIGKILL can never be delivered "+
+				"to a process's signal handler (POSIX prohibits catching, blocking, or ignoring it), "+
+				"so signal.Notify(..., SIGKILL) is a silent no-op", sig)
+		}
+	}
+}
+
+func TestHandleSignalDumpsStackAndStopsOnSIGQUIT(t *testing.T) {
+	// SIGQUIT is the conventional catchable "dump a stack trace, then stop"
+	// signal (unlike SIGKILL, which can never reach a handler).
+	if got := handleSignal(syscall.SIGQUIT); !got {
+		t.Errorf("handleSignalBase(SIGQUIT) = %t, want true (terminal signal that dumps a stack trace)", got)
+	}
+}
+
+func TestHandleSignal(t *testing.T) {
 	for _, tc := range handleSignalTestCases {
 		tc := tc
 		t.Run(tc.input.String(), func(t *testing.T) {
@@ -69,6 +88,9 @@ func TestHandleSignalBase(t *testing.T) {
 }
 
 func TestRunInteractiveInternal(t *testing.T) {
+	if testing.Short() {
+		t.Skip("time.Sleep usage")
+	}
 	for mainName, mainFunc := range getAllMainFuncs() {
 		mainFunc := mainFunc
 		for _, tc := range handleSignalTestCases {
@@ -81,6 +103,14 @@ func TestRunInteractiveInternal(t *testing.T) {
 				go func() {
 					time.Sleep(time.Millisecond * 100)
 					sigCh <- tc.input
+					if !tc.want {
+						// tc.input is non-terminal (e.g. SIGUSR1, which only
+						// dumps a stack trace): runInteractiveInternal must
+						// keep running, so send a terminal signal too or this
+						// test would hang forever.
+						time.Sleep(time.Millisecond * 100)
+						sigCh <- syscall.SIGTERM
+					}
 				}()
 
 				runInteractiveInternal(mainFunc, sigCh)
@@ -90,6 +120,9 @@ func TestRunInteractiveInternal(t *testing.T) {
 }
 
 func TestRunInteractiveInternalAllSignals(t *testing.T) {
+	if testing.Short() {
+		t.Skip("time.Sleep usage")
+	}
 	for mainName, mainFunc := range getAllMainFuncs() {
 		mainFunc := mainFunc
 		for _, signal := range getAllSignals() {
@@ -112,6 +145,21 @@ func TestRunInteractiveInternalAllSignals(t *testing.T) {
 					m.Lock()
 					if !closed {
 						sigCh <- signal
+					}
+					m.Unlock()
+
+					// Most signals in getAllSignals() are non-terminal (e.g.
+					// SIGCHLD, SIGALRM): runInteractiveInternal must keep
+					// running after them. Follow up with a terminal signal
+					// (best-effort, non-blocking) so the test can complete;
+					// it's a no-op if runInteractiveInternal already returned.
+					time.Sleep(time.Millisecond * 100)
+					m.Lock()
+					if !closed {
+						select {
+						case sigCh <- syscall.SIGTERM:
+						default:
+						}
 					}
 					m.Unlock()
 				}()

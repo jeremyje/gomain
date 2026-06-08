@@ -264,14 +264,14 @@ func runService(f MainFunc, name string, isDebug bool) {
 }
 
 func getTerminalSignals() []os.Signal {
-	return append(getTerminalSignalsBase(), syscall.SIGTERM, syscall.SIGABRT)
+	return append(getTerminalSignalsBase(), syscall.SIGTERM, syscall.SIGABRT, syscall.SIGQUIT)
 }
 
 func handleSignal(sig os.Signal) bool {
 	switch sig {
 	case syscall.SIGTERM:
 		return true
-	case syscall.SIGABRT:
+	case syscall.SIGABRT, syscall.SIGQUIT:
 		logStackDump()
 		return true
 	default:
