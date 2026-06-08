@@ -60,14 +60,16 @@ func runInteractiveInternal(f MainFunc, sigCh chan os.Signal) {
 		close(mainErrCh)
 	}()
 
-	select {
-	case err := <-mainErrCh:
-		handleError(err)
-		return
-	case sig := <-sigCh:
-		if handleSignal(sig) {
-			signal.Stop(sigCh)
-			mc.Kill()
+	for {
+		select {
+		case err := <-mainErrCh:
+			handleError(err)
+			return
+		case sig := <-sigCh:
+			if handleSignal(sig) {
+				signal.Stop(sigCh)
+				mc.Kill()
+			}
 		}
 	}
 }
@@ -79,15 +81,12 @@ func handleError(err error) {
 }
 
 func getTerminalSignalsBase() []os.Signal {
-	return []os.Signal{syscall.SIGINT, syscall.SIGKILL}
+	return []os.Signal{syscall.SIGINT}
 }
 
 func handleSignalBase(sig os.Signal) bool {
 	switch sig {
 	case syscall.SIGINT:
-		return true
-	case syscall.SIGKILL:
-		logStackDump()
 		return true
 	default:
 		return false

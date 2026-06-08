@@ -34,13 +34,15 @@ func NewRunCtx() *RunCtx {
 
 func (mc *RunCtx) Kill() {
 	mc.RLock()
-	if !mc.closed {
-		mc.waitCh <- os.Kill
-	} else {
-		mc.RUnlock()
+	defer mc.RUnlock()
+	if mc.closed {
 		return
 	}
-	mc.RUnlock()
+	select {
+	case mc.waitCh <- os.Kill:
+	default:
+		// waitCh already has a pending kill signal buffered; nothing more to do.
+	}
 }
 
 func (mc *RunCtx) Wait() {

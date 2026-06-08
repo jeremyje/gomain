@@ -27,12 +27,15 @@ func platformRun(f MainFunc, cfg Config) {
 }
 
 func getTerminalSignals() []os.Signal {
-	return append(getTerminalSignalsBase(), syscall.SIGTERM)
+	return append(getTerminalSignalsBase(), syscall.SIGTERM, syscall.SIGQUIT)
 }
 
 func handleSignal(sig os.Signal) bool {
 	switch sig {
 	case syscall.SIGTERM:
+		return true
+	case syscall.SIGQUIT:
+		logStackDump()
 		return true
 	default:
 		return handleSignalBase(sig)
