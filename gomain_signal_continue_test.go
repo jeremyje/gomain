@@ -40,7 +40,7 @@ func TestRunInteractiveInternalKeepsRunningAfterNonTerminalSignal(t *testing.T) 
 
 	internalDone := make(chan struct{})
 	go func() {
-		runInteractiveInternal(mainFunc, sigCh)
+		runInteractiveInternal(mainFunc, sigCh, Config{})
 		close(internalDone)
 	}()
 

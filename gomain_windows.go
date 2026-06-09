@@ -43,7 +43,7 @@ func platformRun(f MainFunc, cfg Config) {
 		if cfg.Command != "" {
 			serviceControl(f, cfg)
 		} else {
-			runInteractive(f)
+			runInteractive(f, cfg)
 		}
 	}
 }
@@ -267,7 +267,7 @@ func getTerminalSignals() []os.Signal {
 	return append(getTerminalSignalsBase(), syscall.SIGTERM, syscall.SIGABRT, syscall.SIGQUIT)
 }
 
-func handleSignal(sig os.Signal) bool {
+func handleSignal(sig os.Signal, cfg Config) bool {
 	switch sig {
 	case syscall.SIGTERM:
 		return true

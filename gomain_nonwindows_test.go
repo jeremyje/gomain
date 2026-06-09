@@ -20,6 +20,7 @@ package gomain
 import (
 	"os"
 	"syscall"
+	"testing"
 )
 
 var (
@@ -76,5 +77,27 @@ func getAllSignals() []os.Signal {
 		syscall.SIGWINCH,
 		syscall.SIGXCPU,
 		syscall.SIGXFSZ,
+	}
+}
+
+func TestHandleSignalSIGUSR1Gating(t *testing.T) {
+	testCases := []struct {
+		name string
+		cfg  Config
+	}{
+		{name: "debug disabled", cfg: Config{}},
+		{name: "debug enabled", cfg: Config{Debug: true}},
+		{name: "debug and sensitive enabled", cfg: Config{Debug: true, DebugSensitive: true}},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			got := handleSignal(syscall.SIGUSR1, tc.cfg)
+			if got != false {
+				t.Fatalf("expected SIGUSR1 to leave the process running (return false), got: %t", got)
+			}
+		})
 	}
 }

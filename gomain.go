@@ -33,23 +33,25 @@ type Config struct {
 	ServiceName        string
 	ServiceDescription string
 	Command            string
+	Debug              bool
+	DebugSensitive     bool
 }
 
 func Run(f MainFunc, cfg Config) {
 	platformRun(f, cfg)
 }
 
-func runInteractive(f MainFunc) {
+func runInteractive(f MainFunc, cfg Config) {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, getTerminalSignals()...)
 	defer func() {
 		signal.Stop(sigCh)
 		close(sigCh)
 	}()
-	runInteractiveInternal(f, sigCh)
+	runInteractiveInternal(f, sigCh, cfg)
 }
 
-func runInteractiveInternal(f MainFunc, sigCh chan os.Signal) {
+func runInteractiveInternal(f MainFunc, sigCh chan os.Signal, cfg Config) {
 	mainErrCh := make(chan error, 1)
 
 	mc := internal.NewRunCtx()
@@ -66,9 +68,10 @@ func runInteractiveInternal(f MainFunc, sigCh chan os.Signal) {
 			handleError(err)
 			return
 		case sig := <-sigCh:
-			if handleSignal(sig) {
+			if handleSignal(sig, cfg) {
 				signal.Stop(sigCh)
 				mc.Kill()
+				return
 			}
 		}
 	}
