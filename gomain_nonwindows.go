@@ -23,14 +23,14 @@ import (
 )
 
 func platformRun(f MainFunc, cfg Config) {
-	runInteractive(f)
+	runInteractive(f, cfg)
 }
 
 func getTerminalSignals() []os.Signal {
 	return append(getTerminalSignalsBase(), syscall.SIGTERM, syscall.SIGABRT, syscall.SIGUSR1, syscall.SIGQUIT)
 }
 
-func handleSignal(sig os.Signal) bool {
+func handleSignal(sig os.Signal, cfg Config) bool {
 	switch sig {
 	case syscall.SIGTERM:
 		return true
@@ -38,7 +38,9 @@ func handleSignal(sig os.Signal) bool {
 		logStackDump()
 		return true
 	case syscall.SIGUSR1:
-		logStackDump()
+		if cfg.Debug {
+			logDebugDump(cfg)
+		}
 		return false
 	default:
 		return handleSignalBase(sig)

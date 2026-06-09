@@ -69,7 +69,7 @@ func TestGetTerminalSignalsBaseDoesNotRegisterUncatchableSignals(t *testing.T) {
 func TestHandleSignalDumpsStackAndStopsOnSIGQUIT(t *testing.T) {
 	// SIGQUIT is the conventional catchable "dump a stack trace, then stop"
 	// signal (unlike SIGKILL, which can never reach a handler).
-	if got := handleSignal(syscall.SIGQUIT); !got {
+	if got := handleSignal(syscall.SIGQUIT, Config{}); !got {
 		t.Errorf("handleSignalBase(SIGQUIT) = %t, want true (terminal signal that dumps a stack trace)", got)
 	}
 }
@@ -79,7 +79,7 @@ func TestHandleSignal(t *testing.T) {
 		tc := tc
 		t.Run(tc.input.String(), func(t *testing.T) {
 			t.Parallel()
-			got := handleSignal(tc.input)
+			got := handleSignal(tc.input, Config{})
 			if got != tc.want {
 				t.Fatalf("expected: %t, got: %t", tc.want, got)
 			}
@@ -113,7 +113,7 @@ func TestRunInteractiveInternal(t *testing.T) {
 					}
 				}()
 
-				runInteractiveInternal(mainFunc, sigCh)
+				runInteractiveInternal(mainFunc, sigCh, Config{})
 			})
 		}
 	}
@@ -164,7 +164,7 @@ func TestRunInteractiveInternalAllSignals(t *testing.T) {
 					m.Unlock()
 				}()
 
-				runInteractiveInternal(mainFunc, sigCh)
+				runInteractiveInternal(mainFunc, sigCh, Config{})
 			})
 		}
 	}
@@ -177,7 +177,7 @@ func TestRunInteractiveAllSignals(t *testing.T) {
 			signal := signal
 			t.Run(fmt.Sprintf("%s - %s", mainName, signal), func(t *testing.T) {
 				t.Parallel()
-				runInteractive(mainFunc)
+				runInteractive(mainFunc, Config{})
 			})
 
 			t.Run(fmt.Sprintf("%s - %s", mainName, signal), func(t *testing.T) {
