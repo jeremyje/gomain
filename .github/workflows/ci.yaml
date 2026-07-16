@@ -34,7 +34,7 @@ jobs:
 
     # https://github.com/actions/setup-go
     - name: Setup Go
-      uses: actions/setup-go@v6
+      uses: actions/setup-go@v7
       with:
         go-version: 'oldstable'
 
