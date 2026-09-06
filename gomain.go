@@ -20,7 +20,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/jeremyje/gomain/internal"
+	"github.com/cloudfra/gomain/internal"
 )
 
 type MainCtx interface {

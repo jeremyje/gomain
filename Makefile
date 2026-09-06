@@ -24,7 +24,7 @@ TAG := $(VERSION)
 export PATH := $(PWD)/build/toolchain/bin:$(PATH):/root/go/bin:/usr/local/go/bin:/usr/go/bin
 SOURCE_DIRS=$(shell go list ./... | grep -v '/vendor/')
 
-REGISTRY = ghcr.io/jeremyje
+REGISTRY = ghcr.io/cloudfra
 GOMAIN_EXAMPLE_IMAGE = $(REGISTRY)/gomain-example
 
 # https://go.dev/doc/install/source#environment

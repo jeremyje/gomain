@@ -138,7 +138,7 @@ responsibility — independently readable and testable, mirroring the existing
 
 - `debug_test.go`: one substring-check test per new builder function, e.g.:
   - runtime info contains `runtime.Version()`'s output
-  - build info contains the module path (`github.com/jeremyje/gomain`)
+  - build info contains the module path (`github.com/cloudfra/gomain`)
   - memory stats contains `"HeapAlloc"`
   - process info contains the current PID
   - sensitive info contains a known env var or `os.Args[0]`

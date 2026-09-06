@@ -1,4 +1,4 @@
-module github.com/jeremyje/gomain
+module github.com/cloudfra/gomain
 
 go 1.25.0
 

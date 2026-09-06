@@ -33,10 +33,10 @@ ENTRYPOINT ["/app/example"]
 # https://github.com/opencontainers/image-spec/blob/master/annotations.md
 LABEL \
   org.opencontainers.image.created="${BUILD_TIME}" \
-  org.opencontainers.image.authors="Jeremyje <jeremyje@googlegroups.com>" \
-  org.opencontainers.image.url="https://github.com/jeremyje/gomain" \
-  org.opencontainers.image.documentation="https://github.com/jeremyje/gomain" \
-  org.opencontainers.image.source="https://github.com/jeremyje/gomain" \
+  org.opencontainers.image.authors="cloudfra <cloudfra@googlegroups.com>" \
+  org.opencontainers.image.url="https://github.com/cloudfra/gomain" \
+  org.opencontainers.image.documentation="https://github.com/cloudfra/gomain" \
+  org.opencontainers.image.source="https://github.com/cloudfra/gomain" \
   org.opencontainers.image.version="${BUILD_VERSION}" \
   org.opencontainers.image.revision="1" \
   org.opencontainers.image.vendor="Jeremy Edwards" \
@@ -46,11 +46,11 @@ LABEL \
   org.opencontainers.image.description="Gomain Example App" \
   org.label-schema.schema-version="1.0" \
   org.label-schema.build-date=$BUILD_DATE \
-  org.label-schema.url="https://github.com/jeremyje/gomain" \
-  org.label-schema.vcs-url="https://github.com/jeremyje/gomain" \
+  org.label-schema.url="https://github.com/cloudfra/gomain" \
+  org.label-schema.vcs-url="https://github.com/cloudfra/gomain" \
   org.label-schema.version=$BUILD_VERSION \
   org.label-schema.vcs-ref=$VCS_REF \
   org.label-schema.vendor="Jeremy Edwards" \
   org.label-schema.name="${BINARY_NAME}" \
   org.label-schema.description="Gomain Example App" \
-  org.label-schema.usage="https://github.com/jeremyje/gomain"
+  org.label-schema.usage="https://github.com/cloudfra/gomain"
