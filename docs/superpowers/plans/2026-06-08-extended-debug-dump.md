@@ -14,11 +14,11 @@
 
 ## Important context for the engineer
 
-- This is the `gomain` library (`github.com/jeremyje/gomain`) — a main-loop harness for long-running Go apps. It wraps `os/signal` handling, with platform-specific files selected via Go build tags: `gomain_nonwindows.go` (`!windows && !plan9 && !js`), `gomain_windows.go`, `gomain_plan9.go`, `gomain_js.go`. Only ONE of these compiles for a given `GOOS`, but all four define the same functions (`getTerminalSignals`, `handleSignal`) called from the shared `gomain.go`, so their signatures must stay identical.
+- This is the `gomain` library (`github.com/cloudfra/gomain`) — a main-loop harness for long-running Go apps. It wraps `os/signal` handling, with platform-specific files selected via Go build tags: `gomain_nonwindows.go` (`!windows && !plan9 && !js`), `gomain_windows.go`, `gomain_plan9.go`, `gomain_js.go`. Only ONE of these compiles for a given `GOOS`, but all four define the same functions (`getTerminalSignals`, `handleSignal`) called from the shared `gomain.go`, so their signatures must stay identical.
 - You'll be running tests on Linux, so only `gomain_nonwindows.go`/`gomain_nonwindows_test.go` will actually compile and run in this environment. The Windows/Plan9/JS files must still be edited to keep their function signatures consistent (the Go compiler won't catch cross-platform signature mismatches for you on Linux), but you cannot run their tests here — just match the pattern carefully.
 - Run tests from the project root: `go test -run <TestName> -v .` (the `.` targets the root package; omitting it runs all packages including `internal`, `testing`, `cmd/example`).
 - Existing pattern to mirror: `debug.go` has `getStackDump() []byte` (builds the data) and `logStackDump()` (logs it via `log.Printf("%s", ...)`). `debug_test.go` tests `getStackDump` by asserting the output `strings.Contains` an expected substring (the test's own name, since `runtime.Stack` includes the calling goroutine's function name), then calls `logStackDump()` just to make sure it doesn't panic.
-- `runtime/debug.ReadBuildInfo()` was confirmed (by running a scratch test in this exact module) to return `info.Main.Path == "github.com/jeremyje/gomain"` when run via `go test` here — that's the one substring you can reliably assert on. `info.Settings` (VCS info) and `info.Deps` may be empty depending on how the binary was built — don't assert on them being present, just include them in the output when they exist.
+- `runtime/debug.ReadBuildInfo()` was confirmed (by running a scratch test in this exact module) to return `info.Main.Path == "github.com/cloudfra/gomain"` when run via `go test` here — that's the one substring you can reliably assert on. `info.Settings` (VCS info) and `info.Deps` may be empty depending on how the binary was built — don't assert on them being present, just include them in the output when they exist.
 - `util.go` already has `exePath() string` — reuse it for the executable path; don't duplicate that logic.
 
 ---
@@ -119,7 +119,7 @@ Add to `debug_test.go`:
 ```go
 func TestGetBuildInfo(t *testing.T) {
 	info := getBuildInfo()
-	if !strings.Contains(info, "github.com/jeremyje/gomain") {
+	if !strings.Contains(info, "github.com/cloudfra/gomain") {
 		t.Errorf("expected build info to contain the main module path\n%s", info)
 	}
 }

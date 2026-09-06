@@ -15,7 +15,7 @@
 version: '3.9'
 services:
   gomain-example:
-    image: ghcr.io/jeremyje/gomain-example:v0.1.2
+    image: ghcr.io/cloudfra/gomain-example:v0.1.2
     hostname: gomain-example
     restart: always
     ports:

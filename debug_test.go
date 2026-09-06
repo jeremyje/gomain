@@ -43,7 +43,7 @@ func TestGetRuntimeInfo(t *testing.T) {
 
 func TestGetBuildInfo(t *testing.T) {
 	info := getBuildInfo()
-	if !strings.Contains(info, "github.com/jeremyje/gomain") {
+	if !strings.Contains(info, "github.com/cloudfra/gomain") {
 		t.Errorf("expected build info to contain the main module path\n%s", info)
 	}
 }

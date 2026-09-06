@@ -19,7 +19,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/jeremyje/gomain"
+	"github.com/cloudfra/gomain"
 )
 
 func main() {

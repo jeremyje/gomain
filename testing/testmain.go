@@ -15,8 +15,8 @@
 package testing
 
 import (
-	"github.com/jeremyje/gomain"
-	"github.com/jeremyje/gomain/internal"
+	"github.com/cloudfra/gomain"
+	"github.com/cloudfra/gomain/internal"
 )
 
 func Main(f gomain.MainFunc) func() error {

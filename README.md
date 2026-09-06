@@ -10,7 +10,7 @@ A main harness for Go applications that run for a long time. This harness suppor
 
 ```go
 import (
-  "github.com/jeremyje/gomain"
+  "github.com/cloudfra/gomain"
 )
 
 func main() {
