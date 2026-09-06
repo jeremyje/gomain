@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package testing provides a helper function for testing gomain-based applications.
 package testing
 
 import (
@@ -19,6 +20,7 @@ import (
 	"github.com/cloudfra/gomain/internal"
 )
 
+// Main is a helper function for testing gomain-based applications. It runs the provided main function in a separate goroutine and returns a function that can be called to stop the application and wait for it to exit.
 func Main(f gomain.MainFunc) func() error {
 	errCh := make(chan error, 1)
 	runCtx := internal.NewRunCtx()

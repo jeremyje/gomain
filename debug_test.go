@@ -105,8 +105,14 @@ func TestGetDebugDumpSensitive(t *testing.T) {
 	}
 }
 
-func TestLogDebugDump(t *testing.T) {
+func TestLogDebugDump(_ *testing.T) {
 	// Make sure this doesn't crash or something weird, with and without sensitive info.
 	logDebugDump(Config{})
 	logDebugDump(Config{DebugSensitive: true})
+}
+
+func BenchmarkGetStackDump(b *testing.B) {
+	for b.Loop() {
+		getStackDump()
+	}
 }

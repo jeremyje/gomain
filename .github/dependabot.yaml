@@ -1,4 +1,4 @@
-# Copyright 2022 Jeremy Edwards
+# Copyright 2026 Cloudfra
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,16 +15,18 @@
 # To get started with Dependabot version updates, you'll need to specify which
 # package ecosystems to update and where the package manifests are located.
 # Please see the documentation for all configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 
-# https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference
 version: 2
 updates:
   - package-ecosystem: "docker"
-    directory: "/"
+    directories:
+      - "/**"
     schedule:
       interval: "daily"
   - package-ecosystem: "docker-compose"
-    directory: "/"
+    directories:
+      - "/**"
     schedule:
       interval: "daily"
   - package-ecosystem: "gomod"
@@ -35,3 +37,10 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
+  - package-ecosystem: "terraform"
+    directory: "/install/terraform"
+    schedule:
+      interval: "weekly"

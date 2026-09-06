@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package main is an example of how to use gomain.
 package main
 
 import (
 	"context"
-	"log"
+	"html"
+	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/cloudfra/gomain"
 )
@@ -33,21 +36,28 @@ func main() {
 func appMain(waitFunc func()) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
-		resp.Write([]byte(req.URL.Path))
+		resp.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		safe := html.EscapeString(req.URL.Path)
+		if _, err := resp.Write([]byte(safe)); err != nil {
+			slog.With(err).Warn("Error writing HTTP response")
+		}
 	})
 	s := &http.Server{
-		Handler: mux,
-		Addr:    ":8181",
+		Handler:           mux,
+		Addr:              ":8181",
+		ReadHeaderTimeout: 5 * time.Second,
 	}
 
 	go func() {
 		waitFunc()
 		ctx := context.Background()
-		log.Printf("Stopping server...")
-		s.Shutdown(ctx)
+		slog.Info("Stopping server...")
+		if err := s.Shutdown(ctx); err != nil {
+			slog.With(err).Error("Error stopping server")
+		}
 	}()
 
-	log.Printf("Serving on :8181")
+	slog.Info("Serving on :8181")
 	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return err
 	}

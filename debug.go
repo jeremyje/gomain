@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package gomain provides a framework for building Go applications that can handle graceful shutdowns and signal handling. It allows developers to define a main function that can be run in a controlled context, enabling better management of application lifecycle events such as termination signals and cleanup operations.
 package gomain
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
+	"math"
 	"os"
 	"runtime"
 	"runtime/debug"
@@ -27,7 +29,7 @@ import (
 var processStartTime = time.Now()
 
 func logStackDump() {
-	log.Printf("%s", string(getStackDump()))
+	slog.Debug(string(getStackDump()))
 }
 
 func getRuntimeInfo() string {
@@ -55,11 +57,29 @@ func getProcessInfo() string {
 func getMemoryStats() string {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
+	var pause time.Duration
+	if m.PauseTotalNs > uint64(math.MaxInt64) {
+		pause = time.Duration(math.MaxInt64)
+	} else {
+		pause = time.Duration(int64(m.PauseTotalNs))
+	}
+
+	var lastGC time.Time
+	if m.LastGC == 0 {
+		lastGC = time.Time{}
+	} else {
+		if m.LastGC > uint64(math.MaxInt64) {
+			lastGC = time.Unix(0, int64(math.MaxInt64))
+		} else {
+			lastGC = time.Unix(0, int64(m.LastGC))
+		}
+	}
+
 	return fmt.Sprintf(
 		"HeapAlloc: %d bytes\nHeapSys: %d bytes\nHeapObjects: %d\nStackInuse: %d bytes\n"+
 			"NumGC: %d\nTotalGCPause: %s\nLastGC: %s\nGCCPUFraction: %f\n",
 		m.HeapAlloc, m.HeapSys, m.HeapObjects, m.StackInuse,
-		m.NumGC, time.Duration(m.PauseTotalNs), time.Unix(0, int64(m.LastGC)), m.GCCPUFraction)
+		m.NumGC, pause, lastGC, m.GCCPUFraction)
 }
 
 func getBuildInfo() string {
@@ -119,7 +139,7 @@ func getDebugDump(cfg Config) []byte {
 }
 
 func logDebugDump(cfg Config) {
-	log.Printf("%s", string(getDebugDump(cfg)))
+	slog.Debug(string(getDebugDump(cfg)))
 }
 
 func getStackDump() []byte {
