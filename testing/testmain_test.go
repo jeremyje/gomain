@@ -25,12 +25,12 @@ func TestTestMainAsync(t *testing.T) {
 		waitFunc()
 		return nil
 	}
-	close := Main(m)
+	closeMain := Main(m)
 	val := <-ready
 	if val != 1 {
 		t.Errorf("got: %d, want: 1", val)
 	}
-	if err := close(); err != nil {
+	if err := closeMain(); err != nil {
 		t.Error(err)
 	}
 }

@@ -19,12 +19,14 @@ import (
 	"sync"
 )
 
+// RunCtx is a context for running a program that can be killed and waited on. It is used to manage the lifecycle of a program and its goroutines.
 type RunCtx struct {
 	sync.RWMutex
 	waitCh chan os.Signal
 	closed bool
 }
 
+// NewRunCtx creates a new [RunCtx].
 func NewRunCtx() *RunCtx {
 	return &RunCtx{
 		waitCh: make(chan os.Signal, 1),
@@ -32,6 +34,7 @@ func NewRunCtx() *RunCtx {
 	}
 }
 
+// Kill sends a kill signal to the [RunCtx]. If the [RunCtx] is already closed, it does nothing. If there is already a pending kill signal, it does nothing.
 func (mc *RunCtx) Kill() {
 	mc.RLock()
 	defer mc.RUnlock()
@@ -45,10 +48,12 @@ func (mc *RunCtx) Kill() {
 	}
 }
 
+// Wait blocks until the [RunCtx] is closed. It returns immediately if the [RunCtx] is already closed.
 func (mc *RunCtx) Wait() {
 	<-mc.waitCh
 }
 
+// Close closes the [RunCtx]. It is safe to call multiple times. If the [RunCtx] is already closed, it does nothing.
 func (mc *RunCtx) Close() {
 	doClose := false
 	mc.Lock()

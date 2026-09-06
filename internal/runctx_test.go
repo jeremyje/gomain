@@ -22,6 +22,7 @@ import (
 func TestNewRunCtx(t *testing.T) {
 	rCtx := NewRunCtx()
 
+	t.Logf("RunCtx: %v", rCtx)
 	rCtx.Close()
 	rCtx.Kill()
 	rCtx.Close()
@@ -35,6 +36,7 @@ func TestNewRunCtx(t *testing.T) {
 func TestWaitAfterKill(t *testing.T) {
 	rCtx := NewRunCtx()
 
+	t.Logf("RunCtx: %v", rCtx)
 	rCtx.Kill()
 	rCtx.Close()
 	rCtx.Wait()
@@ -72,6 +74,7 @@ func TestKillTwiceDoesNotDeadlock(t *testing.T) {
 
 func TestWait(t *testing.T) {
 	rCtx := NewRunCtx()
+	t.Logf("RunCtx: %v", rCtx)
 	done := make(chan bool, 1)
 
 	go func() {

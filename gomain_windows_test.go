@@ -22,21 +22,19 @@ import (
 	"syscall"
 )
 
-var (
-	handleSignalTestCases = []struct {
-		input os.Signal
-		want  bool
-	}{
-		{input: syscall.SIGINT, want: true},
-		{input: syscall.SIGTERM, want: true},
-		// SIGKILL can never be delivered to a signal handler (POSIX
-		// prohibits catching, blocking, or ignoring it); it must not be
-		// treated as a terminal signal here.
-		{input: syscall.SIGKILL, want: false},
-		{input: syscall.SIGQUIT, want: true},
-		{input: syscall.SIGABRT, want: true},
-	}
-)
+var handleSignalTestCases = []struct {
+	input os.Signal
+	want  bool
+}{
+	{input: syscall.SIGINT, want: true},
+	{input: syscall.SIGTERM, want: true},
+	// SIGKILL can never be delivered to a signal handler (POSIX
+	// prohibits catching, blocking, or ignoring it); it must not be
+	// treated as a terminal signal here.
+	{input: syscall.SIGKILL, want: false},
+	{input: syscall.SIGQUIT, want: true},
+	{input: syscall.SIGABRT, want: true},
+}
 
 func getAllSignals() []os.Signal {
 	return []os.Signal{

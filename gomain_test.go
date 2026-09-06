@@ -36,10 +36,10 @@ var (
 	}
 
 	immediateMainFuncs = map[string]MainFunc{
-		"immediateReturnFunc": func(wait func()) error {
+		"immediateReturnFunc": func(_ func()) error {
 			return nil
 		},
-		"immediateFailFunc": func(wait func()) error {
+		"immediateFailFunc": func(_ func()) error {
 			return fmt.Errorf("failed")
 		},
 	}

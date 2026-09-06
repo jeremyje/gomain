@@ -21,8 +21,8 @@ import (
 )
 
 func TestAppMain(t *testing.T) {
-	close := gomainTesting.Main(appMain)
-	if err := close(); err != nil {
+	closeMain := gomainTesting.Main(appMain)
+	if err := closeMain(); err != nil {
 		t.Error(err)
 	}
 }

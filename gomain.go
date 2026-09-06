@@ -23,12 +23,15 @@ import (
 	"github.com/cloudfra/gomain/internal"
 )
 
+// MainCtx is the interface for a context that can be waited on. It is used to manage the lifecycle of a program and its goroutines.
 type MainCtx interface {
 	Wait()
 }
 
+// MainFunc is the type of the main function that is run by [Run]. It takes a function that can be called to wait for a kill signal. It returns an error if the program should exit with an error.
 type MainFunc func(func()) error
 
+// Config is the configuration for running a gomain program.
 type Config struct {
 	ServiceName        string
 	ServiceDescription string
@@ -37,6 +40,7 @@ type Config struct {
 	DebugSensitive     bool
 }
 
+// Run runs the given [MainFunc] with the given [Config]. It handles signals and logging. It is the main entry point for a gomain program.
 func Run(f MainFunc, cfg Config) {
 	platformRun(f, cfg)
 }
