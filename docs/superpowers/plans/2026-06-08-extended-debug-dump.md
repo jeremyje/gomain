@@ -26,6 +26,7 @@
 ### Task 1: Add `Debug`/`DebugSensitive` fields to `Config`
 
 **Files:**
+
 - Modify: `gomain.go:32-36`
 
 - [ ] **Step 1: Add the two new fields to the `Config` struct**
@@ -34,9 +35,9 @@ In `gomain.go`, change:
 
 ```go
 type Config struct {
-	ServiceName        string
-	ServiceDescription string
-	Command            string
+  ServiceName  string
+  ServiceDescription string
+  Command      string
 }
 ```
 
@@ -44,11 +45,11 @@ to:
 
 ```go
 type Config struct {
-	ServiceName        string
-	ServiceDescription string
-	Command            string
-	Debug              bool
-	DebugSensitive     bool
+  ServiceName  string
+  ServiceDescription string
+  Command      string
+  Debug        bool
+  DebugSensitive     bool
 }
 ```
 
@@ -69,21 +70,21 @@ git commit -m "Add Debug and DebugSensitive fields to Config"
 ### Task 2: Add runtime & build info helpers
 
 **Files:**
+
 - Modify: `debug.go`
 - Test: `debug_test.go`
-
 - [ ] **Step 1: Write the failing test for `getRuntimeInfo`**
 
 Add to `debug_test.go` (keep the existing `TestGetStackDump` as-is):
 
 ```go
 func TestGetRuntimeInfo(t *testing.T) {
-	info := getRuntimeInfo()
-	for _, want := range []string{runtime.Version(), runtime.GOOS, runtime.GOARCH} {
-		if !strings.Contains(info, want) {
-			t.Errorf("expected runtime info to contain %q\n%s", want, info)
-		}
-	}
+  info := getRuntimeInfo()
+  for _, want := range []string{runtime.Version(), runtime.GOOS, runtime.GOARCH} {
+    if !strings.Contains(info, want) {
+      t.Errorf("expected runtime info to contain %q\n%s", want, info)
+    }
+  }
 }
 ```
 
@@ -100,10 +101,10 @@ Add to `debug.go` (and add `"fmt"` to its imports — it currently imports `"log
 
 ```go
 func getRuntimeInfo() string {
-	return fmt.Sprintf(
-		"Go Version: %s\nGOOS/GOARCH: %s/%s\nNumCPU: %d\nGOMAXPROCS: %d\nNumGoroutine: %d\n",
-		runtime.Version(), runtime.GOOS, runtime.GOARCH,
-		runtime.NumCPU(), runtime.GOMAXPROCS(0), runtime.NumGoroutine())
+  return fmt.Sprintf(
+    "Go Version: %s\nGOOS/GOARCH: %s/%s\nNumCPU: %d\nGOMAXPROCS: %d\nNumGoroutine: %d\n",
+    runtime.Version(), runtime.GOOS, runtime.GOARCH,
+    runtime.NumCPU(), runtime.GOMAXPROCS(0), runtime.NumGoroutine())
 }
 ```
 
@@ -118,10 +119,10 @@ Add to `debug_test.go`:
 
 ```go
 func TestGetBuildInfo(t *testing.T) {
-	info := getBuildInfo()
-	if !strings.Contains(info, "github.com/cloudfra/gomain") {
-		t.Errorf("expected build info to contain the main module path\n%s", info)
-	}
+  info := getBuildInfo()
+  if !strings.Contains(info, "github.com/cloudfra/gomain") {
+    t.Errorf("expected build info to contain the main module path\n%s", info)
+  }
 }
 ```
 
@@ -136,27 +137,27 @@ Add to `debug.go`. Add `"runtime/debug"` and `"strings"` to its imports (note: t
 
 ```go
 func getBuildInfo() string {
-	info, ok := debug.ReadBuildInfo()
-	if !ok {
-		return "Build Info: unavailable\n"
-	}
+  info, ok := debug.ReadBuildInfo()
+  if !ok {
+    return "Build Info: unavailable\n"
+  }
 
-	var sb strings.Builder
-	fmt.Fprintf(&sb, "Main Module: %s %s\n", info.Main.Path, info.Main.Version)
-	fmt.Fprintf(&sb, "Go Version: %s\n", info.GoVersion)
-	for _, setting := range info.Settings {
-		switch setting.Key {
-		case "vcs.revision", "vcs.time", "vcs.modified":
-			fmt.Fprintf(&sb, "%s: %s\n", setting.Key, setting.Value)
-		}
-	}
-	if len(info.Deps) > 0 {
-		sb.WriteString("Dependencies:\n")
-		for _, dep := range info.Deps {
-			fmt.Fprintf(&sb, "  %s %s\n", dep.Path, dep.Version)
-		}
-	}
-	return sb.String()
+  var sb strings.Builder
+  fmt.Fprintf(&sb, "Main Module: %s %s\n", info.Main.Path, info.Main.Version)
+  fmt.Fprintf(&sb, "Go Version: %s\n", info.GoVersion)
+  for _, setting := range info.Settings {
+    switch setting.Key {
+    case "vcs.revision", "vcs.time", "vcs.modified":
+      fmt.Fprintf(&sb, "%s: %s\n", setting.Key, setting.Value)
+    }
+  }
+  if len(info.Deps) > 0 {
+    sb.WriteString("Dependencies:\n")
+    for _, dep := range info.Deps {
+      fmt.Fprintf(&sb, "  %s %s\n", dep.Path, dep.Version)
+    }
+  }
+  return sb.String()
 }
 ```
 
@@ -177,21 +178,21 @@ git commit -m "Add runtime and build info helpers for debug dump"
 ### Task 3: Add memory stats & process info helpers
 
 **Files:**
+
 - Modify: `debug.go`
 - Test: `debug_test.go`
-
 - [ ] **Step 1: Write the failing test for `getMemoryStats`**
 
 Add to `debug_test.go`:
 
 ```go
 func TestGetMemoryStats(t *testing.T) {
-	stats := getMemoryStats()
-	for _, want := range []string{"HeapAlloc", "HeapSys", "NumGC"} {
-		if !strings.Contains(stats, want) {
-			t.Errorf("expected memory stats to contain %q\n%s", want, stats)
-		}
-	}
+  stats := getMemoryStats()
+  for _, want := range []string{"HeapAlloc", "HeapSys", "NumGC"} {
+    if !strings.Contains(stats, want) {
+      t.Errorf("expected memory stats to contain %q\n%s", want, stats)
+    }
+  }
 }
 ```
 
@@ -206,13 +207,13 @@ Add to `debug.go` (add `"time"` to its imports):
 
 ```go
 func getMemoryStats() string {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	return fmt.Sprintf(
-		"HeapAlloc: %d bytes\nHeapSys: %d bytes\nHeapObjects: %d\nStackInuse: %d bytes\n"+
-			"NumGC: %d\nTotalGCPause: %s\nLastGC: %s\nGCCPUFraction: %f\n",
-		m.HeapAlloc, m.HeapSys, m.HeapObjects, m.StackInuse,
-		m.NumGC, time.Duration(m.PauseTotalNs), time.Unix(0, int64(m.LastGC)), m.GCCPUFraction)
+  var m runtime.MemStats
+  runtime.ReadMemStats(&m)
+  return fmt.Sprintf(
+    "HeapAlloc: %d bytes\nHeapSys: %d bytes\nHeapObjects: %d\nStackInuse: %d bytes\n"+
+      "NumGC: %d\nTotalGCPause: %s\nLastGC: %s\nGCCPUFraction: %f\n",
+    m.HeapAlloc, m.HeapSys, m.HeapObjects, m.StackInuse,
+    m.NumGC, time.Duration(m.PauseTotalNs), time.Unix(0, int64(m.LastGC)), m.GCCPUFraction)
 }
 ```
 
@@ -227,13 +228,13 @@ Add to `debug_test.go` (add `"fmt"` and `"os"` to its imports):
 
 ```go
 func TestGetProcessInfo(t *testing.T) {
-	info := getProcessInfo()
-	pid := fmt.Sprintf("%d", os.Getpid())
-	for _, want := range []string{pid, exePath()} {
-		if !strings.Contains(info, want) {
-			t.Errorf("expected process info to contain %q\n%s", want, info)
-		}
-	}
+  info := getProcessInfo()
+  pid := fmt.Sprintf("%d", os.Getpid())
+  for _, want := range []string{pid, exePath()} {
+    if !strings.Contains(info, want) {
+      t.Errorf("expected process info to contain %q\n%s", want, info)
+    }
+  }
 }
 ```
 
@@ -250,18 +251,18 @@ Add to `debug.go` (add `"os"` to its imports). Place the package-level var near 
 var processStartTime = time.Now()
 
 func getProcessInfo() string {
-	wd, err := os.Getwd()
-	if err != nil {
-		wd = fmt.Sprintf("unknown (%s)", err)
-	}
-	hostname, err := os.Hostname()
-	if err != nil {
-		hostname = fmt.Sprintf("unknown (%s)", err)
-	}
-	return fmt.Sprintf(
-		"PID: %d\nExecutable: %s\nWorking Directory: %s\nHostname: %s\nStart Time: %s\nUptime: %s\n",
-		os.Getpid(), exePath(), wd, hostname,
-		processStartTime.Format(time.RFC3339), time.Since(processStartTime))
+  wd, err := os.Getwd()
+  if err != nil {
+    wd = fmt.Sprintf("unknown (%s)", err)
+  }
+  hostname, err := os.Hostname()
+  if err != nil {
+    hostname = fmt.Sprintf("unknown (%s)", err)
+  }
+  return fmt.Sprintf(
+    "PID: %d\nExecutable: %s\nWorking Directory: %s\nHostname: %s\nStart Time: %s\nUptime: %s\n",
+    os.Getpid(), exePath(), wd, hostname,
+    processStartTime.Format(time.RFC3339), time.Since(processStartTime))
 }
 ```
 
@@ -282,21 +283,21 @@ git commit -m "Add memory stats and process info helpers for debug dump"
 ### Task 4: Add sensitive info helper (args & environment)
 
 **Files:**
+
 - Modify: `debug.go`
 - Test: `debug_test.go`
-
 - [ ] **Step 1: Write the failing test**
 
 Add to `debug_test.go`:
 
 ```go
 func TestGetSensitiveInfo(t *testing.T) {
-	info := getSensitiveInfo()
-	for _, want := range []string{"Args:", "Environment:", os.Args[0]} {
-		if !strings.Contains(info, want) {
-			t.Errorf("expected sensitive info to contain %q\n%s", want, info)
-		}
-	}
+  info := getSensitiveInfo()
+  for _, want := range []string{"Args:", "Environment:", os.Args[0]} {
+    if !strings.Contains(info, want) {
+      t.Errorf("expected sensitive info to contain %q\n%s", want, info)
+    }
+  }
 }
 ```
 
@@ -311,16 +312,16 @@ Add to `debug.go`:
 
 ```go
 func getSensitiveInfo() string {
-	var sb strings.Builder
-	sb.WriteString("Args:\n")
-	for _, arg := range os.Args {
-		fmt.Fprintf(&sb, "  %s\n", arg)
-	}
-	sb.WriteString("Environment:\n")
-	for _, env := range os.Environ() {
-		fmt.Fprintf(&sb, "  %s\n", env)
-	}
-	return sb.String()
+  var sb strings.Builder
+  sb.WriteString("Args:\n")
+  for _, arg := range os.Args {
+    fmt.Fprintf(&sb, "  %s\n", arg)
+  }
+  sb.WriteString("Environment:\n")
+  for _, env := range os.Environ() {
+    fmt.Fprintf(&sb, "  %s\n", env)
+  }
+  return sb.String()
 }
 ```
 
@@ -341,47 +342,47 @@ git commit -m "Add sensitive info helper (args and environment) for debug dump"
 ### Task 5: Assemble the full dump (`getDebugDump`/`logDebugDump`)
 
 **Files:**
+
 - Modify: `debug.go`
 - Test: `debug_test.go`
-
 - [ ] **Step 1: Write the failing tests**
 
 Add to `debug_test.go`:
 
 ```go
 func TestGetDebugDump(t *testing.T) {
-	dump := string(getDebugDump(Config{}))
-	for _, want := range []string{
-		"=== Runtime ===",
-		"=== Build Info ===",
-		"=== Memory & GC ===",
-		"=== Process Info ===",
-		"=== Goroutine Stack Dump ===",
-		runtime.Version(),
-		t.Name(), // present because getStackDump's output includes the calling goroutine
-	} {
-		if !strings.Contains(dump, want) {
-			t.Errorf("expected debug dump to contain %q\n%s", want, dump)
-		}
-	}
-	if strings.Contains(dump, "=== Sensitive Info ===") {
-		t.Errorf("expected debug dump to omit sensitive info when DebugSensitive is false\n%s", dump)
-	}
+  dump := string(getDebugDump(Config{}))
+  for _, want := range []string{
+    "=== Runtime ===",
+    "=== Build Info ===",
+    "=== Memory & GC ===",
+    "=== Process Info ===",
+    "=== Goroutine Stack Dump ===",
+    runtime.Version(),
+    t.Name(), // present because getStackDump's output includes the calling goroutine
+  } {
+    if !strings.Contains(dump, want) {
+      t.Errorf("expected debug dump to contain %q\n%s", want, dump)
+    }
+  }
+  if strings.Contains(dump, "=== Sensitive Info ===") {
+    t.Errorf("expected debug dump to omit sensitive info when DebugSensitive is false\n%s", dump)
+  }
 }
 
 func TestGetDebugDumpSensitive(t *testing.T) {
-	dump := string(getDebugDump(Config{DebugSensitive: true}))
-	for _, want := range []string{"=== Sensitive Info ===", os.Args[0]} {
-		if !strings.Contains(dump, want) {
-			t.Errorf("expected debug dump to contain %q when DebugSensitive is true\n%s", want, dump)
-		}
-	}
+  dump := string(getDebugDump(Config{DebugSensitive: true}))
+  for _, want := range []string{"=== Sensitive Info ===", os.Args[0]} {
+    if !strings.Contains(dump, want) {
+      t.Errorf("expected debug dump to contain %q when DebugSensitive is true\n%s", want, dump)
+    }
+  }
 }
 
 func TestLogDebugDump(t *testing.T) {
-	// Make sure this doesn't crash or something weird, with and without sensitive info.
-	logDebugDump(Config{})
-	logDebugDump(Config{DebugSensitive: true})
+  // Make sure this doesn't crash or something weird, with and without sensitive info.
+  logDebugDump(Config{})
+  logDebugDump(Config{DebugSensitive: true})
 }
 ```
 
@@ -396,26 +397,26 @@ Add to `debug.go`:
 
 ```go
 func getDebugDump(cfg Config) []byte {
-	var sb strings.Builder
-	sb.WriteString("=== Runtime ===\n")
-	sb.WriteString(getRuntimeInfo())
-	sb.WriteString("=== Build Info ===\n")
-	sb.WriteString(getBuildInfo())
-	sb.WriteString("=== Memory & GC ===\n")
-	sb.WriteString(getMemoryStats())
-	sb.WriteString("=== Process Info ===\n")
-	sb.WriteString(getProcessInfo())
-	if cfg.DebugSensitive {
-		sb.WriteString("=== Sensitive Info ===\n")
-		sb.WriteString(getSensitiveInfo())
-	}
-	sb.WriteString("=== Goroutine Stack Dump ===\n")
-	sb.Write(getStackDump())
-	return []byte(sb.String())
+  var sb strings.Builder
+  sb.WriteString("=== Runtime ===\n")
+  sb.WriteString(getRuntimeInfo())
+  sb.WriteString("=== Build Info ===\n")
+  sb.WriteString(getBuildInfo())
+  sb.WriteString("=== Memory & GC ===\n")
+  sb.WriteString(getMemoryStats())
+  sb.WriteString("=== Process Info ===\n")
+  sb.WriteString(getProcessInfo())
+  if cfg.DebugSensitive {
+    sb.WriteString("=== Sensitive Info ===\n")
+    sb.WriteString(getSensitiveInfo())
+  }
+  sb.WriteString("=== Goroutine Stack Dump ===\n")
+  sb.Write(getStackDump())
+  return []byte(sb.String())
 }
 
 func logDebugDump(cfg Config) {
-	log.Printf("%s", string(getDebugDump(cfg)))
+  log.Printf("%s", string(getDebugDump(cfg)))
 }
 ```
 
@@ -450,49 +451,49 @@ compiles per platform, but they all implement functions called from the shared
 though only the non-Windows one changes its behavior.
 
 **Files:**
+
 - Modify: `gomain.go:42-73` (`runInteractive`/`runInteractiveInternal`)
 - Modify: `gomain_nonwindows.go:25-46` (`platformRun`/`handleSignal`)
 - Modify: `gomain_windows.go:35` (`runInteractive(f)` call inside `platformRun`) and `:270-280` (`handleSignal`)
 - Modify: `gomain_plan9.go:25-43` (`platformRun`/`handleSignal`)
 - Modify: `gomain_js.go:25-37` (`platformRun`/`handleSignal`)
 - Modify: `gomain_test.go` (4 call sites)
-
 - [ ] **Step 1: Update `gomain.go` to thread `cfg` through `runInteractive`/`runInteractiveInternal`**
 
 In `gomain.go`, change:
 
 ```go
 func runInteractive(f MainFunc) {
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, getTerminalSignals()...)
-	defer func() {
-		signal.Stop(sigCh)
-		close(sigCh)
-	}()
-	runInteractiveInternal(f, sigCh)
+  sigCh := make(chan os.Signal, 1)
+  signal.Notify(sigCh, getTerminalSignals()...)
+  defer func() {
+    signal.Stop(sigCh)
+    close(sigCh)
+  }()
+  runInteractiveInternal(f, sigCh)
 }
 
 func runInteractiveInternal(f MainFunc, sigCh chan os.Signal) {
-	mainErrCh := make(chan error, 1)
+  mainErrCh := make(chan error, 1)
 
-	mc := internal.NewRunCtx()
-	defer mc.Close()
+  mc := internal.NewRunCtx()
+  defer mc.Close()
 
-	go func() {
-		mainErrCh <- f(mc.Wait)
-		close(mainErrCh)
-	}()
+  go func() {
+    mainErrCh <- f(mc.Wait)
+    close(mainErrCh)
+  }()
 
-	select {
-	case err := <-mainErrCh:
-		handleError(err)
-		return
-	case sig := <-sigCh:
-		if handleSignal(sig) {
-			signal.Stop(sigCh)
-			mc.Kill()
-		}
-	}
+  select {
+  case err := <-mainErrCh:
+    handleError(err)
+    return
+  case sig := <-sigCh:
+    if handleSignal(sig) {
+      signal.Stop(sigCh)
+      mc.Kill()
+    }
+  }
 }
 ```
 
@@ -500,36 +501,36 @@ to:
 
 ```go
 func runInteractive(f MainFunc, cfg Config) {
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, getTerminalSignals()...)
-	defer func() {
-		signal.Stop(sigCh)
-		close(sigCh)
-	}()
-	runInteractiveInternal(f, sigCh, cfg)
+  sigCh := make(chan os.Signal, 1)
+  signal.Notify(sigCh, getTerminalSignals()...)
+  defer func() {
+    signal.Stop(sigCh)
+    close(sigCh)
+  }()
+  runInteractiveInternal(f, sigCh, cfg)
 }
 
 func runInteractiveInternal(f MainFunc, sigCh chan os.Signal, cfg Config) {
-	mainErrCh := make(chan error, 1)
+  mainErrCh := make(chan error, 1)
 
-	mc := internal.NewRunCtx()
-	defer mc.Close()
+  mc := internal.NewRunCtx()
+  defer mc.Close()
 
-	go func() {
-		mainErrCh <- f(mc.Wait)
-		close(mainErrCh)
-	}()
+  go func() {
+    mainErrCh <- f(mc.Wait)
+    close(mainErrCh)
+  }()
 
-	select {
-	case err := <-mainErrCh:
-		handleError(err)
-		return
-	case sig := <-sigCh:
-		if handleSignal(sig, cfg) {
-			signal.Stop(sigCh)
-			mc.Kill()
-		}
-	}
+  select {
+  case err := <-mainErrCh:
+    handleError(err)
+    return
+  case sig := <-sigCh:
+    if handleSignal(sig, cfg) {
+      signal.Stop(sigCh)
+      mc.Kill()
+    }
+  }
 }
 ```
 
@@ -543,13 +544,15 @@ Change:
 
 ```go
 func platformRun(f MainFunc, cfg Config) {
-	runInteractive(f)
+  runInteractive(f)
 }
 ```
+
 to:
+
 ```go
 func platformRun(f MainFunc, cfg Config) {
-	runInteractive(f, cfg)
+  runInteractive(f, cfg)
 }
 ```
 
@@ -557,18 +560,18 @@ And change:
 
 ```go
 func handleSignal(sig os.Signal) bool {
-	switch sig {
-	case syscall.SIGTERM:
-		return true
-	case syscall.SIGABRT:
-		logStackDump()
-		return true
-	case syscall.SIGUSR1:
-		logStackDump()
-		return false
-	default:
-		return handleSignalBase(sig)
-	}
+  switch sig {
+  case syscall.SIGTERM:
+    return true
+  case syscall.SIGABRT:
+    logStackDump()
+    return true
+  case syscall.SIGUSR1:
+    logStackDump()
+    return false
+  default:
+    return handleSignalBase(sig)
+  }
 }
 ```
 
@@ -576,20 +579,20 @@ to:
 
 ```go
 func handleSignal(sig os.Signal, cfg Config) bool {
-	switch sig {
-	case syscall.SIGTERM:
-		return true
-	case syscall.SIGABRT:
-		logStackDump()
-		return true
-	case syscall.SIGUSR1:
-		if cfg.Debug {
-			logDebugDump(cfg)
-		}
-		return false
-	default:
-		return handleSignalBase(sig)
-	}
+  switch sig {
+  case syscall.SIGTERM:
+    return true
+  case syscall.SIGABRT:
+    logStackDump()
+    return true
+  case syscall.SIGUSR1:
+    if cfg.Debug {
+      logDebugDump(cfg)
+    }
+    return false
+  default:
+    return handleSignalBase(sig)
+  }
 }
 ```
 
@@ -605,15 +608,15 @@ Change:
 
 ```go
 func handleSignal(sig os.Signal) bool {
-	switch sig {
-	case syscall.SIGTERM:
-		return true
-	case syscall.SIGABRT:
-		logStackDump()
-		return true
-	default:
-		return handleSignalBase(sig)
-	}
+  switch sig {
+  case syscall.SIGTERM:
+    return true
+  case syscall.SIGABRT:
+    logStackDump()
+    return true
+  default:
+    return handleSignalBase(sig)
+  }
 }
 ```
 
@@ -621,15 +624,15 @@ to:
 
 ```go
 func handleSignal(sig os.Signal, cfg Config) bool {
-	switch sig {
-	case syscall.SIGTERM:
-		return true
-	case syscall.SIGABRT:
-		logStackDump()
-		return true
-	default:
-		return handleSignalBase(sig)
-	}
+  switch sig {
+  case syscall.SIGTERM:
+    return true
+  case syscall.SIGABRT:
+    logStackDump()
+    return true
+  default:
+    return handleSignalBase(sig)
+  }
 }
 ```
 
@@ -638,19 +641,19 @@ Also change the `runInteractive(f)` call inside `platformRun` to
 
 ```go
 func platformRun(f MainFunc, cfg Config) {
-	svcMode, err := svc.IsWindowsService()
-	if err != nil {
-		log.Fatalf("failed to determine if we are running in service: %v", err)
-	}
-	if svcMode {
-		runService(f, cfg.ServiceName, false)
-	} else {
-		if cfg.Command != "" {
-			serviceControl(f, cfg)
-		} else {
-			runInteractive(f, cfg)
-		}
-	}
+  svcMode, err := svc.IsWindowsService()
+  if err != nil {
+    log.Fatalf("failed to determine if we are running in service: %v", err)
+  }
+  if svcMode {
+    runService(f, cfg.ServiceName, false)
+  } else {
+    if cfg.Command != "" {
+      serviceControl(f, cfg)
+    } else {
+      runInteractive(f, cfg)
+    }
+  }
 }
 ```
 
@@ -660,23 +663,23 @@ Change:
 
 ```go
 func platformRun(f MainFunc, cfg Config) {
-	runInteractive(f)
+  runInteractive(f)
 }
 
 func getTerminalSignals() []os.Signal {
-	return append(getTerminalSignalsBase(), syscall.SIGTERM, syscall.SIGABRT)
+  return append(getTerminalSignalsBase(), syscall.SIGTERM, syscall.SIGABRT)
 }
 
 func handleSignal(sig os.Signal) bool {
-	switch sig {
-	case syscall.SIGTERM:
-		return true
-	case syscall.SIGABRT:
-		logStackDump()
-		return true
-	default:
-		return handleSignalBase(sig)
-	}
+  switch sig {
+  case syscall.SIGTERM:
+    return true
+  case syscall.SIGABRT:
+    logStackDump()
+    return true
+  default:
+    return handleSignalBase(sig)
+  }
 }
 ```
 
@@ -684,23 +687,23 @@ to:
 
 ```go
 func platformRun(f MainFunc, cfg Config) {
-	runInteractive(f, cfg)
+  runInteractive(f, cfg)
 }
 
 func getTerminalSignals() []os.Signal {
-	return append(getTerminalSignalsBase(), syscall.SIGTERM, syscall.SIGABRT)
+  return append(getTerminalSignalsBase(), syscall.SIGTERM, syscall.SIGABRT)
 }
 
 func handleSignal(sig os.Signal, cfg Config) bool {
-	switch sig {
-	case syscall.SIGTERM:
-		return true
-	case syscall.SIGABRT:
-		logStackDump()
-		return true
-	default:
-		return handleSignalBase(sig)
-	}
+  switch sig {
+  case syscall.SIGTERM:
+    return true
+  case syscall.SIGABRT:
+    logStackDump()
+    return true
+  default:
+    return handleSignalBase(sig)
+  }
 }
 ```
 
@@ -710,20 +713,20 @@ Change:
 
 ```go
 func platformRun(f MainFunc, cfg Config) {
-	runInteractive(f)
+  runInteractive(f)
 }
 
 func getTerminalSignals() []os.Signal {
-	return append(getTerminalSignalsBase(), syscall.SIGTERM)
+  return append(getTerminalSignalsBase(), syscall.SIGTERM)
 }
 
 func handleSignal(sig os.Signal) bool {
-	switch sig {
-	case syscall.SIGTERM:
-		return true
-	default:
-		return handleSignalBase(sig)
-	}
+  switch sig {
+  case syscall.SIGTERM:
+    return true
+  default:
+    return handleSignalBase(sig)
+  }
 }
 ```
 
@@ -731,20 +734,20 @@ to:
 
 ```go
 func platformRun(f MainFunc, cfg Config) {
-	runInteractive(f, cfg)
+  runInteractive(f, cfg)
 }
 
 func getTerminalSignals() []os.Signal {
-	return append(getTerminalSignalsBase(), syscall.SIGTERM)
+  return append(getTerminalSignalsBase(), syscall.SIGTERM)
 }
 
 func handleSignal(sig os.Signal, cfg Config) bool {
-	switch sig {
-	case syscall.SIGTERM:
-		return true
-	default:
-		return handleSignalBase(sig)
-	}
+  switch sig {
+  case syscall.SIGTERM:
+    return true
+  default:
+    return handleSignalBase(sig)
+  }
 }
 ```
 
@@ -752,13 +755,15 @@ func handleSignal(sig os.Signal, cfg Config) bool {
 
 Run: `go vet .`
 Expected: FAIL, with errors like:
-```
+
+```text
 ./gomain_test.go:69:14: not enough arguments in call to handleSignal
 ./gomain_test.go:88:36: not enough arguments in call to runInteractiveInternal
 ./gomain_test.go:111:36: not enough arguments in call to runInteractiveInternal
 ./gomain_test.go:131:30: not enough arguments in call to runInteractive
 ./gomain_test.go:135:21: not enough arguments in call to Run
 ```
+
 (Exact line numbers may differ slightly — fix whatever `go vet` points at.)
 
 Note: `Run(mainFunc, Config{})` itself doesn't need changes — `Run` already
@@ -770,39 +775,51 @@ once the others are fixed; if it does, leave it untouched.
 - [ ] **Step 7: Fix the call sites in `gomain_test.go`**
 
 In `TestHandleSignalBase`, change:
+
 ```go
-			got := handleSignal(tc.input)
+      got := handleSignal(tc.input)
 ```
+
 to:
+
 ```go
-			got := handleSignal(tc.input, Config{})
+      got := handleSignal(tc.input, Config{})
 ```
 
 In `TestRunInteractiveInternal`, change:
+
 ```go
-				runInteractiveInternal(mainFunc, sigCh)
+  runInteractiveInternal(mainFunc, sigCh)
 ```
+
 to:
+
 ```go
-				runInteractiveInternal(mainFunc, sigCh, Config{})
+  runInteractiveInternal(mainFunc, sigCh, Config{})
 ```
 
 In `TestRunInteractiveInternalAllSignals`, change:
+
 ```go
-				runInteractiveInternal(mainFunc, sigCh)
+  runInteractiveInternal(mainFunc, sigCh)
 ```
+
 to:
+
 ```go
-				runInteractiveInternal(mainFunc, sigCh, Config{})
+  runInteractiveInternal(mainFunc, sigCh, Config{})
 ```
 
 In `TestRunInteractiveAllSignals`, change:
+
 ```go
-				runInteractive(mainFunc)
+  runInteractive(mainFunc)
 ```
+
 to:
+
 ```go
-				runInteractive(mainFunc, Config{})
+  runInteractive(mainFunc, Config{})
 ```
 
 (`Run(mainFunc, Config{})` in the same test stays as-is.)
@@ -829,6 +846,7 @@ git commit -m "Thread Config through signal handling and gate SIGUSR1 dump behin
 ### Task 7: Add dedicated tests for the `SIGUSR1`/`Debug` gating behavior
 
 **Files:**
+
 - Modify: `gomain_nonwindows_test.go`
 
 - [ ] **Step 1: Write the new gating tests**
@@ -837,25 +855,25 @@ Add to `gomain_nonwindows_test.go` (it already imports `"os"` and `"syscall"`):
 
 ```go
 func TestHandleSignalSIGUSR1Gating(t *testing.T) {
-	testCases := []struct {
-		name string
-		cfg  Config
-	}{
-		{name: "debug disabled", cfg: Config{}},
-		{name: "debug enabled", cfg: Config{Debug: true}},
-		{name: "debug and sensitive enabled", cfg: Config{Debug: true, DebugSensitive: true}},
-	}
+  testCases := []struct {
+    name string
+    cfg  Config
+  }{
+    {name: "debug disabled", cfg: Config{}},
+    {name: "debug enabled", cfg: Config{Debug: true}},
+    {name: "debug and sensitive enabled", cfg: Config{Debug: true, DebugSensitive: true}},
+  }
 
-	for _, tc := range testCases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			got := handleSignal(syscall.SIGUSR1, tc.cfg)
-			if got != false {
-				t.Fatalf("expected SIGUSR1 to leave the process running (return false), got: %t", got)
-			}
-		})
-	}
+  for _, tc := range testCases {
+    tc := tc
+    t.Run(tc.name, func(t *testing.T) {
+      t.Parallel()
+      got := handleSignal(syscall.SIGUSR1, tc.cfg)
+      if got != false {
+        t.Fatalf("expected SIGUSR1 to leave the process running (return false), got: %t", got)
+      }
+    })
+  }
 }
 ```
 
@@ -882,6 +900,7 @@ git commit -m "Add tests for SIGUSR1 gating behavior under Config.Debug/DebugSen
 ### Task 8: Update README and run the full test suite
 
 **Files:**
+
 - Modify: `README.md`
 
 - [ ] **Step 1: Update the "Dump Stack Trace" section**
@@ -899,7 +918,8 @@ ps -a
 
 kill -s SIGUSR1 [PID]
 ```
-```
+
+```text
 
 Replace it with:
 
@@ -923,11 +943,11 @@ kill -s SIGUSR1 [PID]
 
 The dump includes:
 
-* Go runtime info (version, GOOS/GOARCH, NumCPU, GOMAXPROCS, goroutine count)
-* Build info (main module, dependencies, VCS revision when available)
-* Memory and GC stats
-* Process info (PID, executable path, working directory, hostname, uptime)
-* The full goroutine stack trace
+- Go runtime info (version, GOOS/GOARCH, NumCPU, GOMAXPROCS, goroutine count)
+- Build info (main module, dependencies, VCS revision when available)
+- Memory and GC stats
+- Process info (PID, executable path, working directory, hostname, uptime)
+- The full goroutine stack trace
 
 Setting `gomain.Config{Debug: true, DebugSensitive: true}` additionally
 includes the process's command-line arguments and environment variables in
@@ -935,7 +955,8 @@ the dump. Because these can contain secrets (API keys, tokens, passwords
 passed via flags or env vars), `DebugSensitive` is a separate opt-in from
 `Debug` — only enable it if you're confident the dump's destination (e.g. your
 log storage) is appropriately access-controlled.
-```
+
+```text
 
 - [ ] **Step 2: Run the entire test suite to confirm everything passes together**
 
