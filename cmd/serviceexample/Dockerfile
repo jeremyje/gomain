@@ -22,33 +22,34 @@ ARG BINARY_PATH
 
 WORKDIR /app/
 
-COPY --chown=nonroot $BINARY_PATH /app/example
+COPY --chown=nonroot $BINARY_PATH /app/serviceexample
 COPY --chown=nonroot LICENSE /app/LICENSE
 
-ENTRYPOINT ["/app/example"]
+ENTRYPOINT ["/app/serviceexample"]
 
 # Standardized Docker Image Labels
 # https://github.com/opencontainers/image-spec/blob/master/annotations.md
 LABEL \
     org.opencontainers.image.created="${BUILD_DATE}" \
     org.opencontainers.image.authors="Cloudfra <cloudfra@googlegroups.com>" \
-    org.opencontainers.image.url="https://github.com/cloudfra/example" \
-    org.opencontainers.image.documentation="https://github.com/cloudfra/template-go" \
-    org.opencontainers.image.source="https://github.com/cloudfra/template-go" \
+    org.opencontainers.image.url="https://github.com/cloudfra/gomain" \
+    org.opencontainers.image.documentation="https://github.com/cloudfra/gomain" \
+    org.opencontainers.image.source="https://github.com/cloudfra/gomain" \
     org.opencontainers.image.version="${BUILD_VERSION}" \
     org.opencontainers.image.revision="${VCS_REF}" \
     org.opencontainers.image.vendor="Cloudfra" \
     org.opencontainers.image.licenses="Apache-2.0" \
     org.opencontainers.image.ref.name="" \
     org.opencontainers.image.title="${BINARY_NAME}" \
-    org.opencontainers.image.description="Example application." \
+    org.opencontainers.image.description="Service Example application." \
     org.label-schema.schema-version="1.0" \
     org.label-schema.build-date=$BUILD_DATE \
-    org.label-schema.url="https://github.com/cloudfra/template-go" \
-    org.label-schema.vcs-url="https://github.com/cloudfra/template-go" \
+    org.label-schema.url="https://github.com/cloudfra/gomain" \
+    org.label-schema.vcs-url="https://github.com/cloudfra/gomain" \
     org.label-schema.version=$BUILD_VERSION \
     org.label-schema.vcs-ref=$VCS_REF \
     org.label-schema.vendor="Cloudfra" \
     org.label-schema.name="${BINARY_NAME}" \
-    org.label-schema.description="Example application." \
-    org.label-schema.usage="https://github.com/cloudfra/template-go"
+    org.label-schema.description="Service Example application." \
+    org.label-schema.usage="https://github.com/cloudfra/gomain"
+

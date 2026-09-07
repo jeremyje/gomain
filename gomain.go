@@ -15,7 +15,7 @@
 package gomain
 
 import (
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -83,7 +83,7 @@ func runInteractiveInternal(f MainFunc, sigCh chan os.Signal, cfg Config) {
 
 func handleError(err error) {
 	if err != nil {
-		log.Printf("ERROR: %s", err)
+		slog.With(err).Error("application error")
 	}
 }
 

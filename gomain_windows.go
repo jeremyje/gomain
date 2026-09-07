@@ -19,7 +19,7 @@ package gomain
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"strings"
 	"syscall"
@@ -32,10 +32,16 @@ import (
 	"golang.org/x/sys/windows/svc/mgr"
 )
 
+const (
+	errorCodeBadArguments        = 2
+	errorCodeNotRunningAsService = 3
+)
+
 func platformRun(f MainFunc, cfg Config) {
 	svcMode, err := svc.IsWindowsService()
 	if err != nil {
-		log.Fatalf("failed to determine if we are running in service: %v", err)
+		slog.With(err).Error("failed to determine if we are running in service")
+		os.Exit(errorCodeNotRunningAsService)
 	}
 	if svcMode {
 		runService(f, cfg.ServiceName, false)
@@ -77,13 +83,13 @@ func serviceControl(f MainFunc, cfg Config) {
 }
 
 func usage(errmsg string) {
-	fmt.Fprintf(os.Stderr,
+	slog.Warn(
 		"%s\n\n"+
 			"usage: %s <command>\n"+
 			"       where <command> is one of\n"+
 			"       install, remove, debug, start, stop, pause or continue.\n",
 		errmsg, os.Args[0])
-	os.Exit(2)
+	os.Exit(errorCodeBadArguments)
 }
 
 func installService(name, desc string) error {
@@ -92,21 +98,32 @@ func installService(name, desc string) error {
 	if err != nil {
 		return err
 	}
-	defer m.Disconnect()
+	defer func() {
+		if err := m.Disconnect(); err != nil {
+			slog.With(err).Warn("failed to disconnect to service manager")
+		}
+	}()
+
 	s, err := m.OpenService(name)
 	if err == nil {
-		s.Close()
-		return fmt.Errorf("service %s already exists", name)
+		closeErr := s.Close()
+		return joinErrors(fmt.Errorf("service %s already exists", name), closeErr)
 	}
+
 	s, err = m.CreateService(name, exepath, mgr.Config{DisplayName: desc}, "is", "auto-started")
 	if err != nil {
 		return err
 	}
-	defer s.Close()
+
+	defer func() {
+		if err := s.Close(); err != nil {
+			slog.With(err).Warn("failed to close service manager connection")
+		}
+	}()
 	err = eventlog.InstallAsEventCreate(name, eventlog.Error|eventlog.Warning|eventlog.Info)
 	if err != nil {
-		s.Delete()
-		return fmt.Errorf("SetupEventLogSource() failed: %s", err)
+		deleteErr := s.Delete()
+		return joinErrors(fmt.Errorf("SetupEventLogSource() failed: %s", err), deleteErr)
 	}
 	return nil
 }
@@ -116,12 +133,20 @@ func removeService(name string) error {
 	if err != nil {
 		return err
 	}
-	defer m.Disconnect()
+	defer func() {
+		if err := m.Disconnect(); err != nil {
+			slog.With(err).Warn("failed to disconnect from service manager")
+		}
+	}()
 	s, err := m.OpenService(name)
 	if err != nil {
 		return fmt.Errorf("service %s is not installed", name)
 	}
-	defer s.Close()
+	defer func() {
+		if err := s.Close(); err != nil {
+			slog.With(err).Warn("failed to close service manager connection")
+		}
+	}()
 	err = s.Delete()
 	if err != nil {
 		return err
@@ -138,12 +163,20 @@ func startService(name string) error {
 	if err != nil {
 		return err
 	}
-	defer m.Disconnect()
+	defer func() {
+		if err := m.Disconnect(); err != nil {
+			slog.With(err).Warn("failed to disconnect from service manager")
+		}
+	}()
 	s, err := m.OpenService(name)
 	if err != nil {
 		return fmt.Errorf("could not access service: %v", err)
 	}
-	defer s.Close()
+	defer func() {
+		if err := s.Close(); err != nil {
+			slog.With(err).Warn("failed to close service manager connection")
+		}
+	}()
 	err = s.Start("is", "manual-started")
 	if err != nil {
 		return fmt.Errorf("could not start service: %v", err)
@@ -156,12 +189,20 @@ func controlService(name string, c svc.Cmd, to svc.State) error {
 	if err != nil {
 		return err
 	}
-	defer m.Disconnect()
+	defer func() {
+		if err := m.Disconnect(); err != nil {
+			slog.With(err).Warn("failed to disconnect from service manager")
+		}
+	}()
 	s, err := m.OpenService(name)
 	if err != nil {
 		return fmt.Errorf("could not access service: %v", err)
 	}
-	defer s.Close()
+	defer func() {
+		if err := s.Close(); err != nil {
+			slog.With(err).Warn("failed to close service manager connection")
+		}
+	}()
 	status, err := s.Control(c)
 	if err != nil {
 		return fmt.Errorf("could not send control=%d: %v", c, err)
@@ -186,7 +227,7 @@ type windowsService struct {
 	f MainFunc
 }
 
-func (ws *windowsService) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {
+func (ws *windowsService) Execute(_ []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (ssec bool, errno uint32) {
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown
 	changes <- svc.Status{State: svc.StartPending}
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
@@ -209,7 +250,7 @@ func (ws *windowsService) Execute(args []string, r <-chan svc.ChangeRequest, cha
 			}
 		case err := <-mainErrCh:
 			if err != nil {
-				elog.Error(1, err.Error())
+				reportEventLogError(elog.Error(1, err.Error()))
 			}
 			done = true
 		}
@@ -228,10 +269,10 @@ func (ws *windowsService) handleControl(cr svc.ChangeRequest, changes chan<- svc
 		time.Sleep(100 * time.Millisecond)
 		changes <- cr.CurrentStatus
 	case svc.Stop, svc.Shutdown:
-		elog.Info(1, "Stopping Service")
+		reportEventLogError(elog.Info(1, "Stopping Service"))
 		done = true
 	default:
-		elog.Error(1, fmt.Sprintf("unexpected control request #%d", cr))
+		reportEventLogError(elog.Error(1, fmt.Sprintf("unexpected control request #%d", cr)))
 	}
 	return done
 }
@@ -243,12 +284,17 @@ func runService(f MainFunc, name string, isDebug bool) {
 	} else {
 		elog, err = eventlog.Open(name)
 		if err != nil {
+			reportEventLogError(err)
 			return
 		}
 	}
-	defer elog.Close()
+	defer func() {
+		if err := elog.Close(); err != nil {
+			slog.With(err).Warn("failed to close event log connection")
+		}
+	}()
 
-	elog.Info(1, fmt.Sprintf("starting %s service", name))
+	reportEventLogError(elog.Info(1, fmt.Sprintf("starting %s service", name)))
 	run := svc.Run
 	if isDebug {
 		run = debug.Run
@@ -257,17 +303,17 @@ func runService(f MainFunc, name string, isDebug bool) {
 		f: f,
 	})
 	if err != nil {
-		elog.Error(1, fmt.Sprintf("%s service failed: %v", name, err))
+		reportEventLogError(elog.Error(1, fmt.Sprintf("%s service failed: %v", name, err)))
 		return
 	}
-	elog.Info(1, fmt.Sprintf("%s service stopped", name))
+	reportEventLogError(elog.Info(1, fmt.Sprintf("%s service stopped", name)))
 }
 
 func getTerminalSignals() []os.Signal {
 	return append(getTerminalSignalsBase(), syscall.SIGTERM, syscall.SIGABRT, syscall.SIGQUIT)
 }
 
-func handleSignal(sig os.Signal, cfg Config) bool {
+func handleSignal(sig os.Signal, _ Config) bool {
 	switch sig {
 	case syscall.SIGTERM:
 		return true
@@ -276,5 +322,11 @@ func handleSignal(sig os.Signal, cfg Config) bool {
 		return true
 	default:
 		return handleSignalBase(sig)
+	}
+}
+
+func reportEventLogError(err error) {
+	if err != nil {
+		slog.With(err).Warn("failed to write log entry to event log")
 	}
 }

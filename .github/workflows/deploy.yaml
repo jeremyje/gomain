@@ -142,11 +142,11 @@ jobs:
           files: |
             LICENSE
             build/packages/release.tar.gz
-            build/release/example-darwin_arm64
-            build/release/example-linux_amd64
-            build/release/example-linux_arm64
-            build/release/example-windows_amd64.exe
-            build/release/example-windows_arm64.exe
+            build/release/serviceexample-darwin_arm64
+            build/release/serviceexample-linux_amd64
+            build/release/serviceexample-linux_arm64
+            build/release/serviceexample-windows_amd64.exe
+            build/release/serviceexample-windows_arm64.exe
 
       - name: Login to GitHub Container Registry
         # https://github.com/docker/login-action#github-packages-docker-registry
