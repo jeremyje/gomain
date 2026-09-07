@@ -27,8 +27,8 @@ import (
 
 func main() {
 	gomain.Run(appMain, gomain.Config{
-		ServiceName:        "Example",
-		ServiceDescription: "Example Service Description",
+		ServiceName:        "Service Example",
+		ServiceDescription: "Service Example Service Description",
 		Command:            "",
 	})
 }
